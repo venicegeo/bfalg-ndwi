@@ -1,0 +1,24 @@
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+    image: beachfront:alg-ndwi
+
+  bash:
+    image: beachfront:alg-ndwi
+    entrypoint: /bin/bash
+    volumes:
+      - './data:/work/data'
+
+  test:
+    image: beachfront:alg-ndwi
+    entrypoint: nosetests tests -v -s
+    working_dir: /work
+    volumes:
+      - './data:/work/data'
+
+  process:
+    image: beachfront:alg-ndwi
