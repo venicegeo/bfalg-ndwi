@@ -3,7 +3,7 @@ import os
 import requests
 import json
 from gippy import GeoImage
-import bfalg_ndwi as alg
+import bfalg_ndwi.ndwi as alg
 
 
 def download_image(url):
@@ -31,11 +31,25 @@ class TestMain(unittest.TestCase):
 
     testdir = os.path.dirname(__file__)
 
-    def test_main(self):
+    def setUp(self):
+        """ Download all test images """
+        self.img1 = download_image(self.img1url)
+        self.img2 = download_image(self.img2url)
+        self.qimg = download_image(self.qimgurl)
+
+    def test_process(self):
         """ Extract coastline from two raster bands """
-        img1 = download_image(self.img1url)
-        img2 = download_image(self.img2url)
-        qimg = download_image(self.qimgurl)
-        geojson = alg.process(img1, img2, qimg)
-        with open(os.path.join(self.testdir, img1.basename() + '.geojson'), 'w') as f:
-            f.write(json.dumps(geojson))
+        geojson = alg.process(self.img1, self.img2)
+        print(geojson.keys())
+        #with open(os.path.join(self.testdir, img1.basename() + '.geojson'), 'w') as f:
+        #    f.write(json.dumps(geojson))
+
+    def test_process_with_cloudmask(self):
+        """ Coastline extraction with cloud masking """
+        geojson = alg.process(self.img1, self.img2, self.qimg)
+        print(geojson.keys())
+
+    def test_process_with_coastmask(self):
+        """ Coastline extraction with coast masking """
+        geojson = alg.process(self.img1, self.img2, coastmask=True)
+        print(geojson.keys())
