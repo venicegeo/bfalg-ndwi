@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+    image: beachfront:alg-ndwi-test
+
+  bash:
+    image: beachfront:alg-ndwi-test
+    entrypoint: /bin/bash
+    volumes:
+      - '.:/work'
+
+  test:
+    image: beachfront:alg-ndwi-test
+    entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py -v -s;'
+    working_dir: /work
+    volumes:
+      - '.:/work'
