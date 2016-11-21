@@ -28,6 +28,7 @@ pip install app/.
 #rsync -ax /usr/lib64/python2.7/site-packages/ $DEPLOY_DIR/lib64/python2.7/site-packages/ --exclude-from $DEPLOY_DIR/excluded_packages
 rsync -ax /usr/lib/ $DEPLOY_DIR/lib/
 rsync -ax /usr/lib64/ $DEPLOY_DIR/lib64/
+ln -s lib/python2.7/site-packages/bfalg_ndwi/ndwi.py $DEPLOY_DIR/bfalg-ndwi.py
 
 
 # zip up contents
