@@ -15,7 +15,7 @@ services:
 
   test:
     image: beachfront:alg-ndwi-test
-    entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py -v -s;'
+    entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py test_ndwi -v -s;'
     working_dir: /work
     volumes:
       - '.:/work'
