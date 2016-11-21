@@ -4,6 +4,7 @@ import requests
 import json
 from gippy import GeoImage
 import bfalg_ndwi.ndwi as alg
+from nose.tools import set_trace
 
 
 def download_image(url):
@@ -40,16 +41,18 @@ class TestMain(unittest.TestCase):
     def test_process(self):
         """ Extract coastline from two raster bands """
         geojson = alg.process(self.img1, self.img2)
-        print(geojson.keys())
-        #with open(os.path.join(self.testdir, img1.basename() + '.geojson'), 'w') as f:
-        #    f.write(json.dumps(geojson))
+        self.assertEqual(len(geojson['features']), 55)
 
     def test_process_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
         geojson = alg.process(self.img1, self.img2, self.qimg)
-        print(geojson.keys())
+        self.assertEqual(len(geojson['features']), 1650)
 
-    def test_process_with_coastmask(self):
+    def _test_process_with_coastmask(self):
         """ Coastline extraction with coast masking """
         geojson = alg.process(self.img1, self.img2, coastmask=True)
-        print(geojson.keys())
+        print(len(geojson['features']))
+
+    def _test_open_from_directory(self):
+        """ Open files from directory """
+        alg.open_from_directory(os.path.dirname(__file__))
