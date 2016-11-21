@@ -1,1 +1,3 @@
-beachfront>=0.1.0
+git+https://github.com/gipit/gippy.git@develop
+git+https://github.com/venicegeo/beachfront-py.git@develop
+git+https://github.com/flupke/pypotrace.git@master
