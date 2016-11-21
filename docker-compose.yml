@@ -11,14 +11,18 @@ services:
     image: beachfront:alg-ndwi
     entrypoint: /bin/bash
     volumes:
-      - './data:/work/data'
+      - '.:/work/app'
 
   test:
     image: beachfront:alg-ndwi
-    entrypoint: nosetests tests -v -s
+    entrypoint: bash -c 'cd app; nosetests -v -s;'
     working_dir: /work
     volumes:
-      - './data:/work/data'
+      - '.:/work/app'
 
-  process:
+  package:
     image: beachfront:alg-ndwi
+    command: app/deploy/package.sh
+    working_dir: /work
+    volumes:
+      - '.:/work/app'
