@@ -31,8 +31,8 @@ setup(
     entry_points = {
         'console_scripts': ['bfalg_ndwi=bfalg_ndwi.main:main'],
     },
-    #packages=find_packages(exclude=['docs', 'tests*']),
-    #include_package_data=True,
+    packages=find_packages(exclude=['docs', 'tests*']),
+    include_package_data=True,
     install_requires=install_requires,
     tests_require=tests_require,
 )
