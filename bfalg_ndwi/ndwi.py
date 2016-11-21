@@ -1,4 +1,5 @@
 import os
+import glob
 import gippy
 import gippy.algorithms as alg
 import argparse
@@ -8,40 +9,55 @@ import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 
 
-def process(img1, img2, qimg=None, coastmask=False):
+def process(img1, img2, qimg=None, coastmask=False, save=False):
     """ Process data from indir to outdir """
 
     geoimg = img1.add_band(img2[0])
     if qimg is not None:
-        maskimg = bfmask.create_mask_from_bitmask(qimg)
-        geoimg[0].add_mask(maskimg[0])
+        fout = geoimg.basename() + '_cloudmask.tif' if save else ''
+        maskimg = bfmask.create_mask_from_bitmask(qimg, filename=fout)
+        geoimg.add_mask(maskimg[0] == 1)
 
     # calculate NWDI
     geoimg.set_bandnames(['green', 'nir'])
-    imgout = alg.indices(geoimg, ['ndwi'])
+    fout = geoimg.basename() + '_ndwi.tif' if save else ''
+    imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
     if coastmask:
         # open coastline vector
         fname = os.path.join(os.path.dirname(__file__), 'coastmask.shp')
-        imgout = bfmask.mask_with_vector(imgout, (fname, ''))
+        fout = geoimg.basename() + '_coastmask.tif' if save else ''
+        imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout)
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
+
+    # save thresholded image
+    if save:
+        fout = geoimg.basename() + '_thresh.tif'
+        imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+        (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
     coastline = bfvec.potrace(imgout[0] > threshold)
 
     # convert coordinates to GeoJSON
-    return bfvec.to_geojson(coastline, source=geoimg.basename())
+    geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
+    if save:
+        fout = geoimg.basename() + '_coastline.geojson'
+        with open(fout, 'w') as f:
+            f.write(json.dumps(geojson))
+    return geojson
 
 
-def open_from_directory(dirname=''):
+def open_from_directory(dirin='', ext='.TIF'):
     """ Open collection of files from a directory """
     # inspect directory for imagery, mask, take band ratio
-    #fnames = glob.glob(os.path.join(indir, '*'))
-    #geoimg = gippy.GeoImage(fnames[0:1], nodata=0)
-    pass
+    fnames = glob.glob(os.path.join(dirin, '*%s' % ext))
+    prefix = os.path.commonprefix(fnames)
+    print(prefix)
+    # geoimg = gippy.GeoImage(fnames[0:1], nodata=0)
 
 
 def main():
@@ -49,8 +65,8 @@ def main():
     dhf = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(description='Beachfront Algorithm: NDWI', formatter_class=dhf)
 
-    parser.add_argument('--green', help='Green (or Blue or Coastal Band', required=True)
-    parser.add_argument('--nir', help='NIR Band', required=True)
+    parser.add_argument('green', help='Green (or Blue or Coastal Band)')
+    parser.add_argument('nir', help='NIR Band')
     parser.add_argument('--fout', help='Output filename for geojson', default='coastline.geojson')
     parser.add_argument('--outdir', help='Save intermediate files to this dir (otherwise temp)', default='')
 
