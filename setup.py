@@ -29,7 +29,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     entry_points = {
-        'console_scripts': ['bfalg_ndwi=bfalg_ndwi.main:main'],
+        'console_scripts': ['bfalg_ndwi=bfalg_ndwi.ndwi:main'],
     },
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
