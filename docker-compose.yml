@@ -25,4 +25,4 @@ services:
     command: app/deploy/package.sh
     working_dir: /work
     volumes:
-      - '.:/work/app'
+        - '.:/work/app:rw'
