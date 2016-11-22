@@ -26,8 +26,10 @@ DEPLOY_DIR=app/deploy
 pip install app/.
 #rsync -ax /usr/lib/python2.7/site-packages/ $DEPLOY_DIR/lib/python2.7/site-packages/ --exclude-from $DEPLOY_DIR/excluded_packages
 #rsync -ax /usr/lib64/python2.7/site-packages/ $DEPLOY_DIR/lib64/python2.7/site-packages/ --exclude-from $DEPLOY_DIR/excluded_packages
-rsync -ax /usr/lib/ $DEPLOY_DIR/lib/
-rsync -ax /usr/lib64/ $DEPLOY_DIR/lib64/
+#rsync -r --delete /usr/lib/ $DEPLOY_DIR/lib/
+#rsync -r --delete /usr/lib64/ $DEPLOY_DIR/lib64/
+cp -R /usr/lib $DEPLOY_DIR/lib
+cp -R /usr/lib64 $DEPLOY_DIR/lib64
 ln -s lib/python2.7/site-packages/bfalg_ndwi/ndwi.py $DEPLOY_DIR/bfalg-ndwi.py
 
 
