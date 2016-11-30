@@ -7,6 +7,7 @@ import json
 import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
+from version import __version__
 
 
 def process(img1, img2, qimg=None, coastmask=False, save=False):
@@ -62,8 +63,9 @@ def open_from_directory(dirin='', ext='.TIF'):
 
 def main():
     """ Parse command line arguments and call process() """
+    desc = 'Beachfront Algorithm: NDWI (v%s)' % __version__
     dhf = argparse.ArgumentDefaultsHelpFormatter
-    parser = argparse.ArgumentParser(description='Beachfront Algorithm: NDWI', formatter_class=dhf)
+    parser = argparse.ArgumentParser(description=desc, formatter_class=dhf)
 
     parser.add_argument('green', help='Green (or Blue or Coastal Band)')
     parser.add_argument('nir', help='NIR Band')
@@ -72,8 +74,12 @@ def main():
 
     parser.add_argument('--qband', help='Quality band (used to mask clouds)')
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
+    parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
     args = parser.parse_args()
+    if args.version:
+        print(__version__)
+        return
 
     band1 = gippy.GeoImage(args.green)
     band2 = gippy.GeoImage(args.nir)
