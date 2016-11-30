@@ -7,8 +7,7 @@ COPY requirements-dev.txt /work/requirements-dev.txt
 RUN yum -y update; \
     # centos packages
     yum install -y epel-release; \
-    #yum install -y python-pip numpy python-devel gdal-devel gdal-python swig git wget gcc-c++; \
-    yum install -y python-pip numpy python-devel swig git wget gcc-c++ make; \
+    yum install -y python-pip numpy python-devel swig git wget gcc-c++ make zip; \
     # needed for potrace
     yum install -y agg-devel potrace-devel;
 
