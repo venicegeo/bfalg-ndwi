@@ -11,18 +11,28 @@ services:
     image: beachfront:alg-ndwi
     entrypoint: /bin/bash
     volumes:
-      - '.:/work/app'
+      - '.:/work'
 
   test:
     image: beachfront:alg-ndwi
-    entrypoint: bash -c 'cd app; nosetests -v -s;'
+    entrypoint: bash -c 'nosetests -v -s;'
     working_dir: /work
     volumes:
-      - '.:/work/app'
+      - '.:/work'
 
   package:
     image: beachfront:alg-ndwi
-    command: app/deploy/package.sh
+    command: deploy/package.sh
     working_dir: /work
     volumes:
-      - '.:/work/app'
+      - '.:/work'
+
+  testpackage:
+    image: centos:latest
+    working_dir: /work
+    entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py test_ndwi -v -s;'
+    volumes:
+      - './deploy:/work'
+    environment:
+      - LD_LIBRARY_PATH=/work/lib:/work/lib64
+      - PYTHONPATH=/work/lib/python2.7/site-packages:/work/lib64/python2.7/site-packages
