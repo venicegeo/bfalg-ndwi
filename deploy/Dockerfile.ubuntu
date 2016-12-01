@@ -1,13 +1,9 @@
-FROM centos:latest
+FROM ubuntu:14.04
 
-WORKDIR /work
-COPY requirements.txt /work/requirements.txt
-COPY requirements-dev.txt /work/requirements-dev.txt
-
-RUN yum -y update; \
-    yum install -y epel-release; \
-    yum install -y python-pip numpy python-devel swig git wget gcc-c++ make zip; \
-    yum install -y agg-devel potrace-devel;
+RUN apt-get update; \
+    apt-get install -y wget python-pip python-numpy python-dev python-gdal swig git libproj-dev; \
+    # needed for potrace
+    apt-get install -y libagg-dev libpotrace-dev;
 
 # GDAL
 ENV GDAL_VERSION 1.11.5
@@ -52,12 +48,22 @@ RUN \
         --with-perl=no \
         --with-php=no \
         --without-mrf \
+        --with-static-proj4=/usr/lib \
         --with-hide-internal-symbols=yes \
         CFLAGS="-O2 -Os" CXXFLAGS="-O2 -Os" && \
         make && make install && cd .. && \
         rm -rf gdal-$GDAL_VERSION*
 
+# GDAL installs to /usr/local
+ENV \
+    GDAL_CONFIG=/usr/local/bin/gdal-config \
+    LD_LIBRARY_PATH=/usr/local/lib
+
+WORKDIR /work
+COPY requirements.txt /work/requirements.txt
+COPY requirements-dev.txt /work/requirements-dev.txt
+
 RUN \
-    pip install wheel; \
+    pip install wheel cython; \
     pip install -r requirements.txt; \
     pip install -r requirements-dev.txt;
