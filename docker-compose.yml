@@ -22,13 +22,15 @@ services:
 
   package:
     image: beachfront:alg-ndwi
-    command: deploy/package.sh
+    # update to point to correct package script
+    command: deploy/package-ubuntu.sh
     working_dir: /work
     volumes:
       - '.:/work:rw'
 
   testpackage:
-    image: centos:latest
+    # update to point to same FROM image used in Dockerfile
+    image: ubuntu:14.04
     working_dir: /work
     entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py test_ndwi -v -s;'
     volumes:
