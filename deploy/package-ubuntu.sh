@@ -9,6 +9,7 @@ mkdir -p lib/python2.7
 # package libraries
 cp -L /usr/local/lib/libgdal.so.1 lib/
 cp -L $LIBPATH/libpotrace.so.0 lib/
+cp -L $LIBPATH/libpython2.7.so.1.0 lib/
 
 # package app and python libs
 pip install ../
