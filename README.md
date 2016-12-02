@@ -4,21 +4,21 @@ bf-alg-ndwi is a library and a CLI for running shoreline detection on a director
 
 ### Creating a Deploy Package
 
-Docker can be used to create a deploy package for CentOS.  Call docker-compose to create the package in the deploy directory which can then be copied to the target system.
+Docker can be used to create a deploy package.  First the docker image must be built, and then the package command can be called. 
 
+    $ docker-compose build
 	$ docker-compose run package
 
-Zip up the deploy directory and copy to the target machine. In the example below it is copied to the /work directory
+All necessary files will be put into the deploy directory, which will then be packaged up into a deploy.zip file. Copy to the target machine and unzip.
 
-	$ cd deploy; zip -ru package.zip ./
-
-	# on target machine, copy to work directory
-	$ unzip package.zip
+	$ unzip deploy.zip
 
 There are two environment variables that need to be set prior to calling the CLI.
 
-	$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/lib:/work/lib64:/work/lib64/mysql:/work/lib64/atlas
-	$ export PYTHONPATH=$PYTHONPATH:/work/lib/python2.7/site-packages:/work/lib64/python2.7/site-packages
+	$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+	$ export PYTHONPATH=$PYTHONPATH:$PWD/lib/python2.7/dist-packages
+
+### Usage
 
 Call the bfalg-ndwi CLI:
 
@@ -58,10 +58,12 @@ To build the docker image use the included docker-compose tasks:
 
     $ docker-compose build
 
-Which will build an image called 'bf-py'. Then the imgae can be run:
+Which will build an image called that can be run
 
     # this will run the image in interactive mode (open bash script)
     $ docker-compose run bash
 
     # this willl run the tests using the locally available image
     $ docker-compose run test
+
+Additionally, if a package had previously been created (see above), the testpackage command can be used to test it on a base Linux image. Note this is different then the test which uses a system (the image built to create the package) where dependencies have been conventionally installed.
