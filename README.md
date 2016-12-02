@@ -23,13 +23,12 @@ There are two environment variables that need to be set prior to calling the CLI
 Call the bfalg-ndwi CLI:
 
 ```
-$ python bfalg-ndwi.py -h
-
+$ python bfalg_ndwi.py -h
 usage: bfalg_ndwi.py [-h] [--fout FOUT] [--outdir OUTDIR] [--qband QBAND]
-                     [--coastmask]
-                     green nir
+               [--coastmask] [--version]
+               green nir
 
-Beachfront Algorithm: NDWI
+Beachfront Algorithm: NDWI (v0.1.0)
 
 positional arguments:
   green            Green (or Blue or Coastal Band)
@@ -42,8 +41,8 @@ optional arguments:
                    (default: )
   --qband QBAND    Quality band (used to mask clouds) (default: None)
   --coastmask      Mask non-coastline areas (default: False)
-  ```
-
+  --version        Print version and exit
+```
 
 ### Branches
 The 'develop' branch is the default branch and contains the latest accepted changes to the code base. Changes should be created in a branch and Pull Requests issues to the 'develop' branch. Releases (anything with a version number) should issue a PR to 'master', then tagged with the proper version using `git tag`. Thus, the 'master' branch will always contain the latest tagged release.
