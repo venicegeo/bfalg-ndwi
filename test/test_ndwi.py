@@ -1,10 +1,8 @@
 import unittest
 import os
 import requests
-import json
 from gippy import GeoImage
 import bfalg_ndwi.ndwi as alg
-from nose.tools import set_trace
 
 
 def download_image(url):

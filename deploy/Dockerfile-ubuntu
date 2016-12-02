@@ -1,12 +1,16 @@
 FROM ubuntu:14.04
 
+WORKDIR /work
+
 RUN apt-get update; \
-    apt-get install -y wget python-pip python-numpy python-dev python-gdal swig git libproj-dev; \
-    # needed for potrace
+    apt-get install -y wget python-pip python-dev python-numpy swig git; \
     apt-get install -y libagg-dev libpotrace-dev;
 
-# GDAL
-ENV GDAL_VERSION 1.11.5
+# environment variabless
+ENV GDAL_VERSION=1.11.5 \
+    LD_LIBRARY_PATH=/usr/local/lib \
+    GDAL_CONFIG=/usr/local/bin/gdal-config
+
 RUN \
     wget http://download.osgeo.org/gdal/$GDAL_VERSION/gdal-$GDAL_VERSION.tar.gz && \
     tar -xzvf gdal-$GDAL_VERSION.tar.gz && \
@@ -48,22 +52,16 @@ RUN \
         --with-perl=no \
         --with-php=no \
         --without-mrf \
-        --with-static-proj4=/usr/lib \
         --with-hide-internal-symbols=yes \
         CFLAGS="-O2 -Os" CXXFLAGS="-O2 -Os" && \
         make && make install && cd .. && \
         rm -rf gdal-$GDAL_VERSION*
 
-# GDAL installs to /usr/local
-ENV \
-    GDAL_CONFIG=/usr/local/bin/gdal-config \
-    LD_LIBRARY_PATH=/usr/local/lib
-
-WORKDIR /work
+# install requirements
 COPY requirements.txt /work/requirements.txt
 COPY requirements-dev.txt /work/requirements-dev.txt
 
 RUN \
-    pip install wheel cython; \
+    pip install wheel cython numpy; \
     pip install -r requirements.txt; \
     pip install -r requirements-dev.txt;

@@ -1,0 +1,41 @@
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile-ubuntu
+    image: beachfront:alg-ndwi
+
+  bash:
+    image: beachfront:alg-ndwi
+    entrypoint: /bin/bash
+    volumes:
+      - '.:/work/app:rw'
+
+  test:
+    image: beachfront:alg-ndwi
+    command: bash -c 'nosetests -v -s;'
+    working_dir: /work
+    volumes:
+      - '.:/work:rw'
+
+  package:
+    image: beachfront:alg-ndwi
+    working_dir: /work
+    command: bash -c 'cd deploy; ./package-ubuntu.sh'
+    volumes:
+      - '.:/work:rw'
+
+  testpackage:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile-ubuntu-test
+    working_dir: /work
+    command: bash -c 'cd lib/python2.7/dist-packages/test; nosetests test_ndwi -v -s;'
+    volumes:
+      - './deploy:/work:rw'
+    environment:
+      - LD_LIBRARY_PATH=/work/lib
+      - PYTHONPATH=/work/lib/python2.7/dist-packages

@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+    image: beachfront:alg-ndwi
+
+  bash:
+    image: beachfront:alg-ndwi
+    entrypoint: /bin/bash
+    volumes:
+      - '.:/work:rw'
+
+  test:
+    image: beachfront:alg-ndwi
+    entrypoint: bash -c 'nosetests -v -s;'
+    working_dir: /work
+    volumes:
+      - '.:/work:rw'
+
+  package:
+    image: beachfront:alg-ndwi
+    # update to point to correct package script
+    command: deploy/package-ubuntu.sh
+    working_dir: /work
+    volumes:
+      - '.:/work:rw'
+
+  testpackage:
+    # update to point to same FROM image used in Dockerfile
+    image: ubuntu:14.04
+    working_dir: /work
+    entrypoint: bash -c 'cd lib/python2.7/site-packages/test; python /work/lib/python2.7/site-packages/nose/__main__.py test_ndwi -v -s;'
+    volumes:
+      - './deploy:/work:rw'
+    environment:
+      - LD_LIBRARY_PATH=/work/lib
+      - PYTHONPATH=/work/lib/python2.7/site-packages
