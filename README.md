@@ -9,6 +9,9 @@ Docker can be used to create a deploy package.  First the docker image must be b
     $ docker-compose build
 	$ docker-compose run package
 
+    $ optionally test package on basic Linux image
+    $ docker-compose run testpackage
+
 All necessary files will be put into the deploy directory, which will then be packaged up into a deploy.zip file. Copy to the target machine and unzip.
 
 	$ unzip deploy.zip
