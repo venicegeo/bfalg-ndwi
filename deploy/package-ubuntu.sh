@@ -19,4 +19,4 @@ ln -s GDAL-1.11.5-py2.7-linux-x86_64.egg/osgeo lib/python2.7/dist-packages/osgeo
 ln -s lib/python2.7/dist-packages/bfalg_ndwi/ndwi.py bfalg-ndwi.py
 
 # zip up contents
-#zip -ruq ../deploy.zip ./ -x excluded_packages package*.sh Dockerfile.*
+zip -ruq ../deploy.zip ./ -x excluded_packages package*.sh

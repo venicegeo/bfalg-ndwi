@@ -3,7 +3,7 @@ FROM ubuntu:14.04
 WORKDIR /work
 
 RUN apt-get update; \
-    apt-get install -y wget python-pip python-dev python-numpy swig git; \
+    apt-get install -y wget python-pip python-dev python-numpy swig git zip; \
     apt-get install -y libagg-dev libpotrace-dev;
 
 # environment variabless
