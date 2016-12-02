@@ -21,6 +21,12 @@ services:
     volumes:
       - '.:/work:rw'
 
+  # run the algorithm
+  alg:
+    image: beachfront:alg-ndwi
+    command: ['python', 'bfalg-ndwi.py']
+
+
   package:
     image: beachfront:alg-ndwi
     working_dir: /work
