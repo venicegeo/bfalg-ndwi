@@ -5,7 +5,7 @@ services:
   build:
     build:
       context: .
-      dockerfile: docker/Dockerfile-ubuntu
+      dockerfile: docker/Dockerfile-cf
     image: beachfront:alg-ndwi
 
   bash:
@@ -24,14 +24,14 @@ services:
   package:
     image: beachfront:alg-ndwi
     working_dir: /work
-    command: bash -c 'cd deploy; ./package-ubuntu.sh'
+    command: bash -c 'cd deploy; ./package-cf.sh'
     volumes:
       - '.:/work:rw'
 
   testpackage:
     build:
       context: .
-      dockerfile: docker/Dockerfile-ubuntu-test
+      dockerfile: docker/Dockerfile-cf-test
     working_dir: /work
     command: bash -c 'cd lib/python2.7/dist-packages/test; nosetests test_ndwi -v -s;'
     volumes:
