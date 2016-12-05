@@ -1,13 +1,14 @@
 import os
 import glob
-import gippy
-import gippy.algorithms as alg
 import argparse
 import json
+
+import gippy
+import gippy.algorithms as alg
 import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
-from version import __version__
+from bfalg_ndwi.version import __version__
 
 
 def process(img1, img2, qband=None, coastmask=False, save=False):
