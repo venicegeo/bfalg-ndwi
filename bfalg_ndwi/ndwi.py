@@ -67,8 +67,8 @@ def main():
     dhf = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(description=desc, formatter_class=dhf)
 
-    parser.add_argument('green', help='Green (or Blue or Coastal Band)')
-    parser.add_argument('nir', help='NIR Band')
+    parser.add_argument('--b1', help='Green (or Blue or Coastal Band)', required=True)
+    parser.add_argument('--b2', help='NIR Band', required=True)
     parser.add_argument('--fout', help='Output filename for geojson', default='coastline.geojson')
     parser.add_argument('--outdir', help='Save intermediate files to this dir (otherwise temp)', default='')
 
@@ -77,9 +77,6 @@ def main():
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
     args = parser.parse_args()
-    if args.version:
-        print(__version__)
-        return
 
     band1 = gippy.GeoImage(args.green)
     band2 = gippy.GeoImage(args.nir)
