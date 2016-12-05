@@ -41,12 +41,12 @@ class TestMain(unittest.TestCase):
     def test_process(self):
         """ Extract coastline from two raster bands """
         geojson = alg.process(self.img1, self.img2, save=self.save)
-        self.assertEqual(len(geojson['features']), 152)
+        self.assertEqual(len(geojson['features']), 55)
 
     def test_process_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
         geojson = alg.process(self.img1, self.img2, self.qimg, save=self.save)
-        self.assertEqual(len(geojson['features']), 1836)
+        self.assertEqual(len(geojson['features']), 1650)
 
     def _test_process_with_coastmask(self):
         """ Coastline extraction with coast masking """
