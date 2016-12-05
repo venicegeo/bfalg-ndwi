@@ -1,6 +1,6 @@
 FROM cloudfoundry/cflinuxfs2
 
-#RUN \
-#    apt-get update; \
-#    apt-get install -y python python-pip; \
-#    pip install nose;
+RUN \
+    apt-get update; \
+    apt-get install -y python python-pip; \
+    pip install nose;
