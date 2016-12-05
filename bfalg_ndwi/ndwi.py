@@ -78,8 +78,8 @@ def main():
 
     args = parser.parse_args()
 
-    band1 = gippy.GeoImage(args.green)
-    band2 = gippy.GeoImage(args.nir)
+    band1 = gippy.GeoImage(args.b1)
+    band2 = gippy.GeoImage(args.b2)
     qband = args.qband if args.qband is None else gippy.GeoImage(args.qband)
 
     geojson = process(band1, band2, qband=qband, coastmask=args.coastmask)
