@@ -2,6 +2,7 @@ import os
 import glob
 import argparse
 import json
+import logging
 
 import gippy
 import gippy.algorithms as alg
@@ -9,6 +10,10 @@ import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
+
+logger = logging.getLogger(__file__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
 
 def process(img1, img2, qband=None, coastmask=False, save=False):
@@ -79,15 +84,21 @@ def main():
 
     args = parser.parse_args()
 
-    band1 = gippy.GeoImage(args.b1)
-    band2 = gippy.GeoImage(args.b2)
-    qband = args.qband if args.qband is None else gippy.GeoImage(args.qband)
+    try:
+        band1 = gippy.GeoImage(args.b1)
+        band2 = gippy.GeoImage(args.b2)
+        qband = args.qband if args.qband is None else gippy.GeoImage(args.qband)
 
-    geojson = process(band1, band2, qband=qband, coastmask=args.coastmask)
+        geojson = process(band1, band2, qband=qband, coastmask=args.coastmask)
 
-    # save output
-    with open(args.fout, 'w') as f:
-        f.write(json.dumps(geojson))
+        # save output
+        with open(args.fout, 'w') as f:
+            f.write(json.dumps(geojson))
+        logger.info('bfalg_ndwi complete: %s' % os.path.abspath(args.fout))
+    except Exception, e:
+        logger.error('bfalg_ndwi error: %s' % str(e))
+        from traceback import format_exc
+        logger.error(format_exc())
 
 
 if __name__ == "__main__":
