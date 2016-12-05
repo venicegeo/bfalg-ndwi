@@ -10,13 +10,13 @@ import beachfront.vectorize as bfvec
 from version import __version__
 
 
-def process(img1, img2, qimg=None, coastmask=False, save=False):
+def process(img1, img2, qband=None, coastmask=False, save=False):
     """ Process data from indir to outdir """
 
     geoimg = img1.add_band(img2[0])
-    if qimg is not None:
+    if qband is not None:
         fout = geoimg.basename() + '_cloudmask.tif' if save else ''
-        maskimg = bfmask.create_mask_from_bitmask(qimg, filename=fout)
+        maskimg = bfmask.create_mask_from_bitmask(qband, filename=fout)
         geoimg.add_mask(maskimg[0] == 1)
 
     # calculate NWDI
