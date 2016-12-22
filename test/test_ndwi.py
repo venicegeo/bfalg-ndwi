@@ -48,10 +48,10 @@ class TestMain(unittest.TestCase):
         geojson = alg.process(self.img1, self.img2, self.qimg, save=self.save)
         self.assertEqual(len(geojson['features']), 1650)
 
-    def _test_process_with_coastmask(self):
+    def test_process_with_coastmask(self):
         """ Coastline extraction with coast masking """
         geojson = alg.process(self.img1, self.img2, coastmask=True, save=self.save)
-        print(len(geojson['features']))
+        self.assertEqual(len(geojson['features']), 86)
 
     def _test_open_from_directory(self):
         """ Open files from directory """
