@@ -12,7 +12,7 @@ services:
     image: beachfront:alg-ndwi
     entrypoint: /bin/bash
     volumes:
-      - '.:/work/app:rw'
+      - '.:/work:rw'
 
   test:
     image: beachfront:alg-ndwi
