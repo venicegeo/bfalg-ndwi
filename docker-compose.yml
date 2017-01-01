@@ -5,7 +5,6 @@ services:
   build:
     build:
       context: .
-      dockerfile: docker/Dockerfile-cf
     image: beachfront:alg-ndwi
 
   bash:
@@ -33,7 +32,7 @@ services:
   testpackage:
     build:
       context: .
-      dockerfile: docker/Dockerfile-cf-test
+      dockerfile: Dockerfile-test
     image: beachfront:alg-ndwi-test
     working_dir: /work
     command: bash -c 'nosetests -v -s;'
