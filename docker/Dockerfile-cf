@@ -1,14 +1,21 @@
 FROM cloudfoundry/cflinuxfs2
 
-WORKDIR /work
+WORKDIR /build
 
 RUN apt-get update; \
-    apt-get install -y wget python-pip python-dev python-numpy swig git zip; \
+    apt-get install -y wget python-pip python-dev python-numpy swig git zip libproj-dev libgeos-dev; \
     apt-get install -y libagg-dev libpotrace-dev;
 
-# environment variabless
-ENV GDAL_VERSION=1.11.5 \
-    LD_LIBRARY_PATH=/usr/local/lib \
+# CentOS
+#RUN yum -y update; \
+#    yum install -y epel-release; \
+#    yum install -y python-pip numpy python-devel swig git wget gcc-c++ make zip; \
+#    yum install -y agg-devel potrace-devel;
+
+# environment variables
+ENV \
+    #GDAL_VERSION=1.11.5 \
+    GDAL_VERSION=2.1.2 \
     GDAL_CONFIG=/usr/local/bin/gdal-config
 
 RUN \
@@ -16,6 +23,8 @@ RUN \
     tar -xzvf gdal-$GDAL_VERSION.tar.gz && \
     cd gdal-$GDAL_VERSION && \
     ./configure \
+        --with-static-proj4 \
+        --with-geotiff=yes \
         --with-python=yes \
         --with-hdf4=no \
         --with-hdf5=no \
@@ -41,7 +50,7 @@ RUN \
         --with-grib=no \
         --with-mysql=no \
         --with-ingres=no \
-        --with-xerces=no \
+        --with-xerces=yes \
         --with-expat=no \
         --with-odbc=no \
         --with-curl=yes \
@@ -58,8 +67,8 @@ RUN \
         rm -rf gdal-$GDAL_VERSION*
 
 # install requirements
-COPY requirements.txt /work/requirements.txt
-COPY requirements-dev.txt /work/requirements-dev.txt
+COPY requirements.txt /build/requirements.txt
+COPY requirements-dev.txt /build/requirements-dev.txt
 
 RUN \
     pip install wheel numpy; \
