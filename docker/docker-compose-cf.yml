@@ -18,6 +18,8 @@ services:
     image: beachfront:alg-ndwi
     command: bash -c 'nosetests -v -s;'
     working_dir: /work
+    environment:
+      - LD_LIBRARY_PATH=/usr/local/lib
     volumes:
       - '.:/work:rw'
 
@@ -32,8 +34,21 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile-cf-test
+    image: beachfront:alg-ndwi-test
     working_dir: /work
-    command: bash -c 'cd lib/python2.7/dist-packages/test; nosetests test_ndwi -v -s;'
+    command: bash -c 'nosetests -v -s;'
+    volumes:
+      - './deploy:/work/deploy:rw'
+      - './test:/work/test'
+    environment:
+      - LD_LIBRARY_PATH=/work/deploy/lib
+      - PYTHONPATH=/work/deploy/lib/python2.7/dist-packages
+      - GDAL_DATA=/work/deploy/share/gdal
+
+  bashpackage:
+    image: beachfront:alg-ndwi-test
+    entrypoint: /bin/bash
+    working_dir: /work
     volumes:
       - './deploy:/work:rw'
     environment:
