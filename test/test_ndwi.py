@@ -20,7 +20,7 @@ def download_image(url):
     return GeoImage(fout)
 
 
-class TestMain(unittest.TestCase):
+class TestNDWI(unittest.TestCase):
     """ Test masking functions """
 
     # cirrus
@@ -30,27 +30,35 @@ class TestMain(unittest.TestCase):
 
     testdir = os.path.dirname(__file__)
 
-    save = False
-
     def setUp(self):
         """ Download all test images """
         self.img1 = download_image(self.img1url)
         self.img2 = download_image(self.img2url)
         self.qimg = download_image(self.qimgurl)
 
-    def test_process(self):
+    def test_parse_args(self):
+        """ Parse arguments """
+        args = alg.parse_args('-i test1.tif test2.tif')
+        print(args)
+        self.assertEqual(len(args.filenames), 2)
+
+    def _test_open_image(self):
+        """ Open 1 or 2 files to get two specific bands """
+        filenames = []
+
+    def _test_process(self):
         """ Extract coastline from two raster bands """
-        geojson = alg.process(self.img1, self.img2, save=self.save)
+        geojson = alg.process(self.img1, self.img2)
         self.assertEqual(len(geojson['features']), 55)
 
-    def test_process_with_cloudmask(self):
+    def _test_process_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
-        geojson = alg.process(self.img1, self.img2, self.qimg, save=self.save)
+        geojson = alg.process(self.img1, self.img2, self.qimg)
         self.assertEqual(len(geojson['features']), 1650)
 
-    def test_process_with_coastmask(self):
+    def _test_process_with_coastmask(self):
         """ Coastline extraction with coast masking """
-        geojson = alg.process(self.img1, self.img2, coastmask=True, save=self.save)
+        geojson = alg.process(self.img1, self.img2, coastmask=True)
         self.assertEqual(len(geojson['features']), 86)
 
     def _test_open_from_directory(self):
