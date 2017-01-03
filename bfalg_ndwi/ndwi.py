@@ -25,7 +25,7 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description=desc, formatter_class=dhf)
 
     parser.add_argument('-i', '--input', help='Input image (1 or 2 files)', required=True, action='append')
-    parser.add_argument('-b', '--bands', help='Band numbers for Green and NIR bands', default=[1, 1], nargs=2)
+    parser.add_argument('-b', '--bands', help='Band numbers for Green and NIR bands', default=[1, 1], nargs=2, type=int)
 
     parser.add_argument('--outdir', help='Save intermediate files to this dir (otherwise temp)', default='')
     parser.add_argument('--fout', help='Output filename for geojson', default='coastline.geojson')
@@ -34,21 +34,19 @@ def parse_args(args):
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
-    return parser.parse_args(args)
+    return parser.parse_args(args.split(' '))
 
 
-def open_image(filenames, bands, mask=None):
+def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
         if len(filenames) == 2:
-            band1 = gippy.GeoImage(filenames[0]).select([bands[0]])
+            geoimg = gippy.GeoImage(filenames[0]).select([bands[0]])
             band2 = gippy.GeoImage(filenames[1]).select([bands[1]])
-            geoimg = band1.add_band(band2[0])
+            geoimg.add_band(band2[0])
         else:
             geoimg = gippy.GeoImage(filenames[0]).select(bands)
         geoimg.set_bandnames(['green', 'nir'])
-        if mask is not None:
-            geoimg[0].add_mask(mask == 1)
         return geoimg
     except Exception, e:
         logger.error('bfalg_ndwi error opening input: %s' % str(e))
@@ -97,27 +95,30 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
     return geojson
 
 
-def main():
+def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout=''):
     """ Parse command line arguments and call process() """
-    args = parse_args(sys.argv[1:])
+
+    geoimg = open_image(filenames, bands)
 
     # landsat cloudmask
-    if args.l8bqa is not None:
+    if l8bqa is not None:
         try:
-            maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(args.l8bqa))
+            fout = os.path.join(outdir, 'cloudmask.tif')
+            maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout)
+            geoimg.add_mask(maskimg[0] == 1)
         except Exception, e:
             logger.error('bfalg_ndwi error creating cloudmask: %s' % str(e))
             logger.error(format_exc())
 
-    geoimg = open_image(args.filenames, args.bands, mask=maskimg[0])
-
     try:
-        process(geoimg, coastmask=args.coastmask, outdir=args.outdir)
-        logger.info('bfalg_ndwi complete: %s' % os.path.abspath(args.fout))
+        geojson = process(geoimg, coastmask=coastmask, outdir=outdir)
+        logger.info('bfalg_ndwi complete: %s' % os.path.abspath(fout))
+        return geojson
     except Exception, e:
         logger.error('bfalg_ndwi error: %s' % str(e))
         logger.error(format_exc())
 
 
 if __name__ == "__main__":
+    args = parse_args(sys.argv[1:])
     main()

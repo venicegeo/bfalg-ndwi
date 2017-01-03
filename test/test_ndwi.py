@@ -36,31 +36,36 @@ class TestNDWI(unittest.TestCase):
         self.img2 = download_image(self.img2url)
         self.qimg = download_image(self.qimgurl)
 
+    def open_image(self):
+        """ Open test image """
+        filenames = [self.img1.filename(), self.img2.filename()]
+        geoimg = alg.open_image(filenames, [1, 1])
+        return geoimg
+
     def test_parse_args(self):
         """ Parse arguments """
-        args = alg.parse_args('-i test1.tif test2.tif')
-        print(args)
-        self.assertEqual(len(args.filenames), 2)
+        args = alg.parse_args('-i test1.tif -i test2.tif')
+        self.assertEqual(len(args.input), 2)
+        args = alg.parse_args('-i test.tif -b 1 5')
+        self.assertEqual(args.bands[1], 5)
 
-    def _test_open_image(self):
+    def test_open_image(self):
         """ Open 1 or 2 files to get two specific bands """
-        filenames = []
+        geoimg = self.open_image()
+        self.assertEqual(geoimg.nbands(), 2)
 
-    def _test_process(self):
-        """ Extract coastline from two raster bands """
-        geojson = alg.process(self.img1, self.img2)
+    def test_process(self):
+        """ Coastline extraction from two raster bands """
+        geoimg = self.open_image()
+        geojson = alg.process(geoimg)
         self.assertEqual(len(geojson['features']), 55)
 
-    def _test_process_with_cloudmask(self):
+    def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
-        geojson = alg.process(self.img1, self.img2, self.qimg)
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(), outdir=self.testdir)
         self.assertEqual(len(geojson['features']), 1650)
 
-    def _test_process_with_coastmask(self):
+    def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
-        geojson = alg.process(self.img1, self.img2, coastmask=True)
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True)
         self.assertEqual(len(geojson['features']), 86)
-
-    def _test_open_from_directory(self):
-        """ Open files from directory """
-        alg.open_from_directory(os.path.dirname(__file__))
