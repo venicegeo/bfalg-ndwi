@@ -10,6 +10,8 @@ services:
   bash:
     image: beachfront:alg-ndwi
     entrypoint: /bin/bash
+    environment:
+      - LD_LIBRARY_PATH=/usr/local/lib
     volumes:
       - '.:/work:rw'
 
