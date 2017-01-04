@@ -44,9 +44,9 @@ class TestNDWI(unittest.TestCase):
 
     def test_parse_args(self):
         """ Parse arguments """
-        args = alg.parse_args('-i test1.tif -i test2.tif')
+        args = alg.parse_args('-i test1.tif -i test2.tif'.split(' '))
         self.assertEqual(len(args.input), 2)
-        args = alg.parse_args('-i test.tif -b 1 5')
+        args = alg.parse_args('-i test.tif -b 1 5'.split(' '))
         self.assertEqual(args.bands[1], 5)
 
     def test_open_image(self):

@@ -34,7 +34,7 @@ def parse_args(args):
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
-    return parser.parse_args(args.split(' '))
+    return parser.parse_args(args)
 
 
 def open_image(filenames, bands):
