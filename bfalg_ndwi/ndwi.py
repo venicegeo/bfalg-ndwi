@@ -121,4 +121,4 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    main()
+    main(args)
