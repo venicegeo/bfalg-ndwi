@@ -97,7 +97,6 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
 
 def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout=''):
     """ Parse command line arguments and call process() """
-
     geoimg = open_image(filenames, bands)
 
     # landsat cloudmask
@@ -111,7 +110,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
             logger.error(format_exc())
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, outdir=outdir)
+        geojson = process(geoimg, coastmask=coastmask, outdir=outdir, fout=fout)
         logger.info('bfalg_ndwi complete: %s' % os.path.abspath(fout))
         return geojson
     except Exception, e:
@@ -121,4 +120,5 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    main(args)
+    main(args.input, bands=args.bands, l8bqa=args.l8bqa,
+         coastmask=args.coastmask, outdir=args.outdir, fout=args.fout)
