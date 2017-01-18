@@ -13,7 +13,7 @@ import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
@@ -73,6 +73,7 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
+    logger.debug('Threshold = %s' % threshold)
 
     # debug - save thresholded image
     # imgout2 = gippy.GeoImage.create_from(imgout, filename=prefix + '_thresh.tif', dtype='byte')
@@ -118,7 +119,11 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
         logger.error(format_exc())
 
 
-if __name__ == "__main__":
+def cli():
     args = parse_args(sys.argv[1:])
     main(args.input, bands=args.bands, l8bqa=args.l8bqa,
          coastmask=args.coastmask, outdir=args.outdir, fout=args.fout)
+
+
+if __name__ == "__main__":
+    cli()
