@@ -1,2 +1,6 @@
+1.0.1:
+    - uses updated beachfront-py that fixes filtering of fake lines (nodata borders)
+    - increase default turdsize (min size of lines) to 1000 to reduce # of small features
+
 1.0.0:
     - initial version
