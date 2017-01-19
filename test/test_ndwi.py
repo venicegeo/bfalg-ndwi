@@ -57,15 +57,18 @@ class TestNDWI(unittest.TestCase):
     def test_process(self):
         """ Coastline extraction from two raster bands """
         geoimg = self.open_image()
-        geojson = alg.process(geoimg)
-        self.assertEqual(len(geojson['features']), 55)
+        fout = os.path.join(self.testdir, 'process.geojson')
+        geojson = alg.process(geoimg, fout=fout)
+        self.assertEqual(len(geojson['features']), 103)
 
     def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
-        geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(), outdir=self.testdir)
-        self.assertEqual(len(geojson['features']), 1650)
+        fout = os.path.join(self.testdir, 'process_cloud.geojson')
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(), outdir=self.testdir,  fout=fout)
+        self.assertEqual(len(geojson['features']), 193)
 
     def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
-        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True)
-        self.assertEqual(len(geojson['features']), 86)
+        fout = os.path.join(self.testdir, 'process_coast.geojson')
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True,  fout=fout)
+        self.assertEqual(len(geojson['features']), 95)

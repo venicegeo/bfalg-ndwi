@@ -80,7 +80,7 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
     # (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold)
+    coastline = bfvec.potrace(imgout[0] > threshold, turdsize=1000.0)
 
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
