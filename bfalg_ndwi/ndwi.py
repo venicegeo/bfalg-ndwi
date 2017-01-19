@@ -68,8 +68,8 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
     if coastmask:
         # open coastline vector
         fname = os.path.join(os.path.dirname(__file__), 'coastmask.shp')
-        fout = prefix + '_coastmask.tif'
-        imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout)
+        fout_coast = prefix + '_coastmask.tif'
+        imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
@@ -103,8 +103,8 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
     # landsat cloudmask
     if l8bqa is not None:
         try:
-            fout = os.path.join(outdir, 'cloudmask.tif')
-            maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout)
+            fout_cloud = os.path.join(outdir, 'cloudmask.tif')
+            maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout_cloud)
             geoimg.add_mask(maskimg[0] == 1)
         except Exception, e:
             logger.error('bfalg_ndwi error creating cloudmask: %s' % str(e))
