@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
+MINSIZE = 1000.0
 
 def parse_args(args):
     """ Parse arguments for the NDWI algorithm """
@@ -32,6 +33,7 @@ def parse_args(args):
 
     parser.add_argument('--l8bqa', help='Landat 8 Quality band (used to mask clouds)')
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
+    parser.add_argument('--minsize', help='Minimum coastline size', default=MINSIZE)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
     return parser.parse_args(args)
@@ -54,7 +56,7 @@ def open_image(filenames, bands):
         logger.error(format_exc())
 
 
-def process(geoimg, coastmask=False, outdir='', fout=''):
+def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
     """ Process data from indir to outdir """
     bname = geoimg.basename()
     if outdir is None:
@@ -80,7 +82,7 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
     # (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold, turdsize=1000.0)
+    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize)
 
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
@@ -96,7 +98,7 @@ def process(geoimg, coastmask=False, outdir='', fout=''):
     return geojson
 
 
-def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout=''):
+def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
 
@@ -122,7 +124,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, outdir='', fout='
 def cli():
     args = parse_args(sys.argv[1:])
     main(args.input, bands=args.bands, l8bqa=args.l8bqa,
-         coastmask=args.coastmask, outdir=args.outdir, fout=args.fout)
+         coastmask=args.coastmask, minsize=args.minsize, outdir=args.outdir, fout=args.fout)
 
 
 if __name__ == "__main__":
