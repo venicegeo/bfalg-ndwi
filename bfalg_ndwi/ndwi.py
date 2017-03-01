@@ -13,11 +13,12 @@ import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('beachfront')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
 MINSIZE = 1000.0
+
 
 def parse_args(args):
     """ Parse arguments for the NDWI algorithm """
@@ -29,11 +30,12 @@ def parse_args(args):
     parser.add_argument('-b', '--bands', help='Band numbers for Green and NIR bands', default=[1, 1], nargs=2, type=int)
 
     parser.add_argument('--outdir', help='Save intermediate files to this dir (otherwise temp)', default='')
-    parser.add_argument('--fout', help='Output filename for geojson', default='coastline.geojson')
+    h = 'Basename to give to output files (no extension, defaults to first input filename'
+    parser.add_argument('--basename', help=h, default=None)
 
     parser.add_argument('--l8bqa', help='Landat 8 Quality band (used to mask clouds)')
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
-    parser.add_argument('--minsize', help='Minimum coastline size', default=MINSIZE)
+    parser.add_argument('--minsize', help='Minimum coastline size', default=MINSIZE, type=float)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
     return parser.parse_args(args)
@@ -43,22 +45,25 @@ def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
         if len(filenames) == 2:
+            logger.info('Opening %s (band %s) and % (band %s)' %
+                        (filenames[0], bands[0], filenames[1], bands[1]))
             geoimg = gippy.GeoImage(filenames[0]).select([bands[0]])
             band2 = gippy.GeoImage(filenames[1]).select([bands[1]])
             geoimg.add_band(band2[0])
         else:
+            logger.info('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
             geoimg = gippy.GeoImage(filenames[0]).select(bands)
         geoimg.set_bandnames(['green', 'nir'])
         return geoimg
     except Exception, e:
         logger.error('bfalg_ndwi error opening input: %s' % str(e))
-        from traceback import format_exc
-        logger.error(format_exc())
+        raise SystemExit()
 
 
-def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
+def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
     """ Process data from indir to outdir """
-    bname = geoimg.basename()
+    if bname is None:
+        bname = geoimg.basename()
     if outdir is None:
         outdir = tempfile.mkdtemp()
     prefix = os.path.join(outdir, bname)
@@ -75,11 +80,14 @@ def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
-    logger.debug('Threshold = %s' % threshold)
+    logger.debug("Otsu's threshold = %s" % threshold)
 
     # debug - save thresholded image
-    # imgout2 = gippy.GeoImage.create_from(imgout, filename=prefix + '_thresh.tif', dtype='byte')
-    # (imgout[0] > threshold).save(imgout2[0])
+    if logger.level <= logging.DEBUG:
+        fout = prefix + '_thresh.tif'
+        logger.debug('Saving thresholded image as %s' % fout)
+        imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+        (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
     coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize)
@@ -88,43 +96,49 @@ def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
 
     # write geojson output file
-    if fout == '':
-        fout = prefix + '_coastline.geojson'
-    elif not os.path.isabs(fout):
-        fout = os.path.join(outdir, fout)
+    fout = prefix + '.geojson'
     with open(fout, 'w') as f:
         f.write(json.dumps(geojson))
 
     return geojson
 
 
-def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, outdir='', fout=''):
+def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
+    if geoimg is None:
+        logger.error('bfalg-ndwi error opening input file %s' % ','.join(filenames))
+        raise SystemExit()
+
+    if bname is None:
+        bname = geoimg[0].basename()
+
+    logger.info('bfalg-ndwi start: %s' % bname)
 
     # landsat cloudmask
     if l8bqa is not None:
+        logger.debug('Applying landsat quality mask %s to remove clouds' % l8bqa)
         try:
-            fout_cloud = os.path.join(outdir, 'cloudmask.tif')
+            fout_cloud = os.path.join(outdir, '%s_cloudmask.tif' % bname)
             maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout_cloud)
             geoimg.add_mask(maskimg[0] == 1)
         except Exception, e:
-            logger.error('bfalg_ndwi error creating cloudmask: %s' % str(e))
-            logger.error(format_exc())
+            logger.error('bfalg-ndwi error creating cloudmask: %s' % str(e))
+            raise SystemExit()
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, outdir=outdir, fout=fout)
-        logger.info('bfalg_ndwi complete: %s' % os.path.abspath(fout))
+        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, outdir=outdir, bname=bname)
+        logger.info('bfalg-ndwi complete: %s' % bname)
         return geojson
     except Exception, e:
-        logger.error('bfalg_ndwi error: %s' % str(e))
-        logger.error(format_exc())
+        logger.error('bfalg-ndwi error: %s' % str(e))
+        raise SystemExit()
 
 
 def cli():
     args = parse_args(sys.argv[1:])
     main(args.input, bands=args.bands, l8bqa=args.l8bqa,
-         coastmask=args.coastmask, minsize=args.minsize, outdir=args.outdir, fout=args.fout)
+         coastmask=args.coastmask, minsize=args.minsize, outdir=args.outdir, bname=args.basename)
 
 
 if __name__ == "__main__":
