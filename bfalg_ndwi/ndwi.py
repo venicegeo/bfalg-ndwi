@@ -4,7 +4,6 @@ import sys
 import argparse
 import json
 import logging
-from traceback import format_exc
 
 import gippy
 import gippy.algorithms as alg
@@ -14,7 +13,6 @@ import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
 
 logger = logging.getLogger('beachfront')
-logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
 MINSIZE = 1000.0
@@ -36,6 +34,8 @@ def parse_args(args):
     parser.add_argument('--l8bqa', help='Landat 8 Quality band (used to mask clouds)')
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
     parser.add_argument('--minsize', help='Minimum coastline size', default=MINSIZE, type=float)
+    h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
+    parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
 
     return parser.parse_args(args)
@@ -107,7 +107,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
     if geoimg is None:
-        logger.error('bfalg-ndwi error opening input file %s' % ','.join(filenames))
+        logger.critical('bfalg-ndwi error opening input file %s' % ','.join(filenames))
         raise SystemExit()
 
     if bname is None:
@@ -123,7 +123,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
             maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout_cloud)
             geoimg.add_mask(maskimg[0] == 1)
         except Exception, e:
-            logger.error('bfalg-ndwi error creating cloudmask: %s' % str(e))
+            logger.critical('bfalg-ndwi error creating cloudmask: %s' % str(e))
             raise SystemExit()
 
     try:
@@ -131,12 +131,13 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
         logger.info('bfalg-ndwi complete: %s' % bname)
         return geojson
     except Exception, e:
-        logger.error('bfalg-ndwi error: %s' % str(e))
+        logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
 
 
 def cli():
     args = parse_args(sys.argv[1:])
+    logger.setLevel(args.verbose * 10)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa,
          coastmask=args.coastmask, minsize=args.minsize, outdir=args.outdir, bname=args.basename)
 
