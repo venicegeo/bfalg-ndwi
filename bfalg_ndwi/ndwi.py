@@ -45,7 +45,7 @@ def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
         if len(filenames) == 2:
-            logger.info('Opening %s (band %s) and % (band %s)' %
+            logger.info('Opening %s (band %s) and %s (band %s)' %
                         (filenames[0], bands[0], filenames[1], bands[1]))
             geoimg = gippy.GeoImage(filenames[0]).select([bands[0]])
             band2 = gippy.GeoImage(filenames[1]).select([bands[1]])
