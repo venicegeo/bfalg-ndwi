@@ -66,6 +66,9 @@ RUN \
         make && make install && cd .. && \
         rm -rf gdal-$GDAL_VERSION*
 
+ENV \
+    LD_LIBRARY_PATH=/usr/local/lib
+
 # install requirements
 COPY requirements.txt /build/requirements.txt
 COPY requirements-dev.txt /build/requirements-dev.txt
