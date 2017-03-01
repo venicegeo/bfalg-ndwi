@@ -10,8 +10,6 @@ services:
   bash:
     image: beachfront:alg-ndwi
     entrypoint: /bin/bash
-    environment:
-      - LD_LIBRARY_PATH=/usr/local/lib
     volumes:
       - '.:/work:rw'
 
@@ -19,8 +17,6 @@ services:
     image: beachfront:alg-ndwi
     command: bash -c 'nosetests -v -s --with-coverage --cover-inclusive --cover-package bfalg_ndwi'
     working_dir: /work
-    environment:
-      - LD_LIBRARY_PATH=/usr/local/lib
     volumes:
       - '.:/work:rw'
 
