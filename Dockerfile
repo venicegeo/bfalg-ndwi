@@ -4,7 +4,7 @@ WORKDIR /build
 
 RUN apt-get update; \
     apt-get install -y wget python-pip python-dev python-numpy swig git zip libproj-dev libgeos-dev; \
-    apt-get install -y libagg-dev libpotrace-dev;
+    apt-get install -y libagg-dev; # libpotrace-dev;
 
 # CentOS
 #RUN yum -y update; \
@@ -16,8 +16,19 @@ RUN apt-get update; \
 ENV \
     #GDAL_VERSION=1.11.5 \
     GDAL_VERSION=2.1.2 \
-    GDAL_CONFIG=/usr/local/bin/gdal-config
+    GDAL_CONFIG=/usr/local/bin/gdal-config \
+    POTRACE_VERSION=1.14
 
+# install potrace
+RUN \
+    wget http://potrace.sourceforge.net/download/$POTRACE_VERSION/potrace-$POTRACE_VERSION.tar.gz; \
+    tar -xzvf potrace-$POTRACE_VERSION.tar.gz; \
+    cd potrace-$POTRACE_VERSION; \
+    ./configure --with-libpotrace; \
+    make && make install && cd .. && \
+    rm -rf potrace-$POTRACE_VERSION*
+
+# install gdal
 RUN \
     wget http://download.osgeo.org/gdal/$GDAL_VERSION/gdal-$GDAL_VERSION.tar.gz && \
     tar -xzvf gdal-$GDAL_VERSION.tar.gz && \

@@ -13,7 +13,7 @@ cp -LR /usr/local/share/gdal share/gdal
 cp -L /usr/lib/libgeos_c.so.1 lib/
 cp -L /usr/lib/libgeos-3.4.2.so lib/
 cp -L /usr/lib/libproj.so.0 lib/
-cp -L $LIBPATH/libpotrace.so.0 lib/
+cp -L /usr/local/lib/libpotrace.so.0 lib/
 cp -L $LIBPATH/libpython2.7.so.1.0 lib/
 
 # package app and python libs
