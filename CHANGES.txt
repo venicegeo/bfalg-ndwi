@@ -1,3 +1,7 @@
+1.0.2:
+    - Auditable logger
+    - Simplification and close line string options added
+
 1.0.1:
     - uses updated beachfront-py that fixes filtering of fake lines (nodata borders)
     - increase default turdsize (min size of lines) to 1000 to reduce # of small features

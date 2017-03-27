@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # defaults
 defaults = {
-    'minsize': 1000.0,
+    'minsize': 100.0,
     'close': 5,
     'coastmask': False,
     'simple': None,
@@ -58,6 +58,7 @@ def parse_args(args):
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=defaults['coastmask'], action='store_true')
     parser.add_argument('--minsize', help='Minimum coastline size', default=defaults['minsize'], type=float)
     parser.add_argument('--close', help='Close line strings within given pixels', default=defaults['close'], type=int)
+    parser.add_argument('--simple', help='Simplify using tolerance in map units', default=None, type=float)
     h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
     parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
@@ -132,11 +133,14 @@ def process(geoimg, coastmask=defaults['coastmask'],
     with open(fout, 'w') as f:
         f.write(json.dumps(geojson))
 
-    return geojson
+    if simple is not None:
+        fout = bfvec.simplify(fout, tolerance=simple)
+
+    return fout
 
 
-def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'],
-         minsize=defaults['minsize'], close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
+def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], minsize=defaults['minsize'],
+         close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
     if geoimg is None:
@@ -161,9 +165,10 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'],
             raise SystemExit()
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close, outdir=outdir, bname=bname)
+        fout = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
+                       simple=simple, outdir=outdir, bname=bname)
         logger.info('bfalg-ndwi complete: %s' % bname)
-        return geojson
+        return fout
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
@@ -172,8 +177,8 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'],
 def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
-    main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask,
-         minsize=args.minsize, close=args.close, outdir=args.outdir, bname=args.basename)
+    main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
+         close=args.close, simple=args.simple, outdir=args.outdir, bname=args.basename)
 
 
 if __name__ == "__main__":
