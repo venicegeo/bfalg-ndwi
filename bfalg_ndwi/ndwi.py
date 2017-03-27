@@ -27,11 +27,18 @@ import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
+from beachfront.logger import init_logger
 
-logger = logging.getLogger('beachfront')
-logger.addHandler(logging.StreamHandler())
+init_logger()
+logger = logging.getLogger(__name__)
 
-MINSIZE = 1000.0
+# defaults
+defaults = {
+    'minsize': 1000.0,
+    'close': 5,
+    'coastmask': False,
+    'simple': None,
+}
 
 
 def parse_args(args):
@@ -48,8 +55,9 @@ def parse_args(args):
     parser.add_argument('--basename', help=h, default=None)
 
     parser.add_argument('--l8bqa', help='Landat 8 Quality band (used to mask clouds)')
-    parser.add_argument('--coastmask', help='Mask non-coastline areas', default=False, action='store_true')
-    parser.add_argument('--minsize', help='Minimum coastline size', default=MINSIZE, type=float)
+    parser.add_argument('--coastmask', help='Mask non-coastline areas', default=defaults['coastmask'], action='store_true')
+    parser.add_argument('--minsize', help='Minimum coastline size', default=defaults['minsize'], type=float)
+    parser.add_argument('--close', help='Close line strings within given pixels', default=defaults['close'], type=int)
     h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
     parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
@@ -61,13 +69,16 @@ def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
         if len(filenames) == 2:
-            logger.info('Opening %s (band %s) and %s (band %s)' %
-                        (filenames[0], bands[0], filenames[1], bands[1]))
+            logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
+            logger.info('Opening %s' % filenames[1], action='Open file', actee=filenames[1], actor=__name__)
+            logger.debug('Opening %s (band %s) and %s (band %s)' %
+                         (filenames[0], bands[0], filenames[1], bands[1]))
             geoimg = gippy.GeoImage(filenames[0]).select([bands[0]])
             band2 = gippy.GeoImage(filenames[1]).select([bands[1]])
             geoimg.add_band(band2[0])
         else:
-            logger.info('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
+            logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
+            logger.debug('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
             geoimg = gippy.GeoImage(filenames[0]).select(bands)
         geoimg.set_bandnames(['green', 'nir'])
         return geoimg
@@ -76,7 +87,8 @@ def open_image(filenames, bands):
         raise SystemExit()
 
 
-def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
+def process(geoimg, coastmask=defaults['coastmask'],
+            minsize=defaults['minsize'], close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
     """ Process data from indir to outdir """
     if bname is None:
         bname = geoimg.basename()
@@ -85,7 +97,9 @@ def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
     prefix = os.path.join(outdir, bname)
 
     # calculate NWDI
-    imgout = alg.indices(geoimg, ['ndwi'], filename=prefix + '_ndwi.tif')
+    fout = prefix + '_ndwi.tif'
+    logger.info('Saving NDWI to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
     if coastmask:
@@ -102,24 +116,27 @@ def process(geoimg, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
     if logger.level <= logging.DEBUG:
         fout = prefix + '_thresh.tif'
         logger.debug('Saving thresholded image as %s' % fout)
+        logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
         imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
         (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize)
+    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close)
 
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
 
     # write geojson output file
     fout = prefix + '.geojson'
+    logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
     with open(fout, 'w') as f:
         f.write(json.dumps(geojson))
 
     return geojson
 
 
-def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, outdir='', bname=None):
+def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'],
+         minsize=defaults['minsize'], close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
     if geoimg is None:
@@ -136,6 +153,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
         logger.debug('Applying landsat quality mask %s to remove clouds' % l8bqa)
         try:
             fout_cloud = os.path.join(outdir, '%s_cloudmask.tif' % bname)
+            logger.info('Opening %s BQA file' % l8bqa, action='Open file', actee=l8bqa, actor=__name__)
             maskimg = bfmask.create_mask_from_bitmask(gippy.GeoImage(l8bqa), filename=fout_cloud)
             geoimg.add_mask(maskimg[0] == 1)
         except Exception, e:
@@ -143,7 +161,7 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
             raise SystemExit()
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, outdir=outdir, bname=bname)
+        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close, outdir=outdir, bname=bname)
         logger.info('bfalg-ndwi complete: %s' % bname)
         return geojson
     except Exception, e:
@@ -154,8 +172,8 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=False, minsize=MINSIZE, 
 def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
-    main(args.input, bands=args.bands, l8bqa=args.l8bqa,
-         coastmask=args.coastmask, minsize=args.minsize, outdir=args.outdir, bname=args.basename)
+    main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask,
+         minsize=args.minsize, close=args.close, outdir=args.outdir, bname=args.basename)
 
 
 if __name__ == "__main__":

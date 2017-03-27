@@ -19,6 +19,7 @@ import os
 import requests
 from gippy import GeoImage
 import bfalg_ndwi.ndwi as alg
+from beachfront.logger import init_logger
 
 
 def download_image(url):
@@ -51,6 +52,7 @@ class TestNDWI(unittest.TestCase):
         self.img1 = download_image(self.img1url)
         self.img2 = download_image(self.img2url)
         self.qimg = download_image(self.qimgurl)
+        #init_logger(muted=False)
 
     def open_image(self):
         """ Open test image """
@@ -64,6 +66,8 @@ class TestNDWI(unittest.TestCase):
         self.assertEqual(len(args.input), 2)
         args = alg.parse_args('-i test.tif -b 1 5'.split(' '))
         self.assertEqual(args.bands[1], 5)
+        args = alg.parse_args('-i test1.tif --close 0'.split(' '))
+        self.assertEqual(args.close, 0)
 
     def test_open_image(self):
         """ Open 1 or 2 files to get two specific bands """
@@ -74,18 +78,19 @@ class TestNDWI(unittest.TestCase):
         """ Coastline extraction from two raster bands """
         geoimg = self.open_image()
         # fout = os.path.join(self.testdir, 'process.geojson')
-        geojson = alg.process(geoimg, bname='test')
-        self.assertEqual(len(geojson['features']), 100)
+        geojson = alg.process(geoimg, bname='test', outdir=self.testdir)
+        self.assertEqual(len(geojson['features']), 103)
 
     def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
         # fout = os.path.join(self.testdir, 'process_cloud.geojson')
         geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(),
-                           outdir=self.testdir, bname='test')
-        self.assertEqual(len(geojson['features']), 454)
+                           outdir=self.testdir, close=0, bname='test')
+        self.assertEqual(len(geojson['features']), 493)
 
     def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
         # fout = os.path.join(self.testdir, 'process_coast.geojson')
-        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True, bname='test')
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True,
+                           outdir=self.testdir, bname='test')
         self.assertEqual(len(geojson['features']), 95)
