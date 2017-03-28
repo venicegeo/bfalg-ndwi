@@ -87,6 +87,7 @@ NDWI = (green-nir) / (green+nir)
 The band names, green and nir, is what is referenced in the online help. However, other bands can work as well, or even better on some instruments. The 'Green' band is a band that has a high water reflectance, while the NIR band is a band that has a very low water reflectance. The following bands are recommended.
 
 | Sensor        | 'Green' band  | 'NIR' band  |
+|---------------|---------------|-------------|
 | Landsat8      | 1 (Coastal)   | 5 (NIR)     |
 | RapidEye      | 2 (Green)     | 4 (NIR)     |
 | PlanetSceope  | 2 (Green)     | 4 (NIR)     |
