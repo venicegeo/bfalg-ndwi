@@ -1,1 +1,69 @@
-docker/docker-compose-cf.yml
+# bfalg-ndwi
+# https://github.com/venicegeo/bfalg-ndwi
+
+# Copyright 2016, RadiantBlue Technologies, Inc.
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+    image: beachfront:alg-ndwi
+
+  bash:
+    image: beachfront:alg-ndwi
+    entrypoint: /bin/bash
+    volumes:
+      - '.:/work:rw'
+
+  test:
+    image: beachfront:alg-ndwi
+    command: bash -c 'nosetests -v -s --with-coverage --cover-inclusive --cover-package bfalg_ndwi'
+    working_dir: /work
+    volumes:
+      - '.:/work:rw'
+
+  package:
+    image: beachfront:alg-ndwi
+    working_dir: /work
+    command: bash -c 'cd deploy; ./package-cf.sh'
+    volumes:
+      - '.:/work:rw'
+
+  testpackage:
+    build:
+      context: .
+      dockerfile: Dockerfile-test
+    image: beachfront:alg-ndwi-test
+    working_dir: /work
+    command: bash -c 'nosetests -v -s;'
+    volumes:
+      - './deploy:/work/deploy:rw'
+      - './test:/work/test'
+    environment:
+      - LD_LIBRARY_PATH=/work/deploy/lib
+      - PYTHONPATH=/work/deploy/lib/python2.7/dist-packages
+      - GDAL_DATA=/work/deploy/share/gdal
+
+  bashpackage:
+    image: beachfront:alg-ndwi-test
+    entrypoint: /bin/bash
+    working_dir: /work
+    volumes:
+      - './deploy:/work:rw'
+      - './test:/work/test'
+    environment:
+      - LD_LIBRARY_PATH=/work/lib
+      - PYTHONPATH=/work/lib/python2.7/dist-packages

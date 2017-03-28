@@ -1,3 +1,19 @@
+"""
+bfalg-ndwi
+https://github.com/venicegeo/bfalg-ndwi
+
+Copyright 2016, RadiantBlue Technologies, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+"""
 import unittest
 import os
 import requests
@@ -20,7 +36,7 @@ def download_image(url):
     return GeoImage(fout)
 
 
-class TestMain(unittest.TestCase):
+class TestNDWI(unittest.TestCase):
     """ Test masking functions """
 
     # cirrus
@@ -30,29 +46,50 @@ class TestMain(unittest.TestCase):
 
     testdir = os.path.dirname(__file__)
 
-    save = False
-
     def setUp(self):
         """ Download all test images """
         self.img1 = download_image(self.img1url)
         self.img2 = download_image(self.img2url)
         self.qimg = download_image(self.qimgurl)
+        #init_logger(muted=False)
+
+    def open_image(self):
+        """ Open test image """
+        filenames = [self.img1.filename(), self.img2.filename()]
+        geoimg = alg.open_image(filenames, [1, 1])
+        return geoimg
+
+    def test_parse_args(self):
+        """ Parse arguments """
+        args = alg.parse_args('-i test1.tif -i test2.tif'.split(' '))
+        self.assertEqual(len(args.input), 2)
+        args = alg.parse_args('-i test.tif -b 1 5'.split(' '))
+        self.assertEqual(args.bands[1], 5)
+        args = alg.parse_args('-i test1.tif --close 0'.split(' '))
+        self.assertEqual(args.close, 0)
+
+    def test_open_image(self):
+        """ Open 1 or 2 files to get two specific bands """
+        geoimg = self.open_image()
+        self.assertEqual(geoimg.nbands(), 2)
 
     def test_process(self):
-        """ Extract coastline from two raster bands """
-        geojson = alg.process(self.img1, self.img2, save=self.save)
-        self.assertEqual(len(geojson['features']), 55)
+        """ Coastline extraction from two raster bands """
+        geoimg = self.open_image()
+        # fout = os.path.join(self.testdir, 'process.geojson')
+        geojson = alg.process(geoimg, bname='test', outdir=self.testdir)
+        self.assertEqual(len(geojson['features']), 103)
 
-    def test_process_with_cloudmask(self):
+    def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
-        geojson = alg.process(self.img1, self.img2, self.qimg, save=self.save)
-        self.assertEqual(len(geojson['features']), 1650)
+        # fout = os.path.join(self.testdir, 'process_cloud.geojson')
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(),
+                           outdir=self.testdir, close=0, bname='test')
+        self.assertEqual(len(geojson['features']), 493)
 
-    def _test_process_with_coastmask(self):
+    def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
-        geojson = alg.process(self.img1, self.img2, coastmask=True, save=self.save)
-        print(len(geojson['features']))
-
-    def _test_open_from_directory(self):
-        """ Open files from directory """
-        alg.open_from_directory(os.path.dirname(__file__))
+        # fout = os.path.join(self.testdir, 'process_coast.geojson')
+        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True,
+                           outdir=self.testdir, bname='test')
+        self.assertEqual(len(geojson['features']), 95)
