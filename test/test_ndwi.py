@@ -19,7 +19,6 @@ import os
 import requests
 from gippy import GeoImage
 import bfalg_ndwi.ndwi as alg
-from beachfront.logger import init_logger
 
 
 def download_image(url):

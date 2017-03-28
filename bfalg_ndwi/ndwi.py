@@ -27,9 +27,7 @@ import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
-from beachfront.logger import init_logger
 
-init_logger()
 logger = logging.getLogger(__name__)
 
 # defaults
