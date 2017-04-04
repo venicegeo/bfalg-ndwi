@@ -36,6 +36,7 @@ defaults = {
     'close': 5,
     'coastmask': False,
     'simple': None,
+    'smooth': 0.0,
 }
 
 
@@ -57,6 +58,7 @@ def parse_args(args):
     parser.add_argument('--minsize', help='Minimum coastline size', default=defaults['minsize'], type=float)
     parser.add_argument('--close', help='Close line strings within given pixels', default=defaults['close'], type=int)
     parser.add_argument('--simple', help='Simplify using tolerance in map units', default=None, type=float)
+    parser.add_argument('--smooth', help='Smoothing from 0 (none) to 1.33 (no corners', default=defaults['smooth'], type=float)
     h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
     parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
@@ -86,8 +88,9 @@ def open_image(filenames, bands):
         raise SystemExit()
 
 
-def process(geoimg, coastmask=defaults['coastmask'],
-            minsize=defaults['minsize'], close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
+def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize'],
+            close=defaults['close'], simple=defaults['simple'], smooth=defaults['smooth'],
+            outdir='', bname=None):
     """ Process data from indir to outdir """
     if bname is None:
         bname = geoimg.basename()
@@ -120,7 +123,7 @@ def process(geoimg, coastmask=defaults['coastmask'],
         (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close)
+    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
 
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
@@ -134,11 +137,11 @@ def process(geoimg, coastmask=defaults['coastmask'],
     if simple is not None:
         fout = bfvec.simplify(fout, tolerance=simple)
 
-    return fout
+    return geojson
 
 
 def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], minsize=defaults['minsize'],
-         close=defaults['close'], simple=defaults['simple'], outdir='', bname=None):
+         close=defaults['close'], simple=defaults['simple'], smooth=defaults['smooth'], outdir='', bname=None):
     """ Parse command line arguments and call process() """
     geoimg = open_image(filenames, bands)
     if geoimg is None:
@@ -163,10 +166,10 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
             raise SystemExit()
 
     try:
-        fout = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
-                       simple=simple, outdir=outdir, bname=bname)
+        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
+                          simple=simple, smooth=smooth, outdir=outdir, bname=bname)
         logger.info('bfalg-ndwi complete: %s' % bname)
-        return fout
+        return geojson
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
@@ -176,7 +179,7 @@ def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
-         close=args.close, simple=args.simple, outdir=args.outdir, bname=args.basename)
+         close=args.close, simple=args.simple, smooth=args.smooth, outdir=args.outdir, bname=args.basename)
 
 
 if __name__ == "__main__":
