@@ -134,7 +134,7 @@ def process(geoimg, coastmask=defaults['coastmask'],
     if simple is not None:
         fout = bfvec.simplify(fout, tolerance=simple)
 
-    return fout
+    return geojson
 
 
 def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], minsize=defaults['minsize'],
@@ -163,10 +163,10 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
             raise SystemExit()
 
     try:
-        fout = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
+        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
                        simple=simple, outdir=outdir, bname=bname)
         logger.info('bfalg-ndwi complete: %s' % bname)
-        return fout
+        return geojson
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()

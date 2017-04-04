@@ -78,18 +78,18 @@ class TestNDWI(unittest.TestCase):
         geoimg = self.open_image()
         # fout = os.path.join(self.testdir, 'process.geojson')
         geojson = alg.process(geoimg, bname='test', outdir=self.testdir)
-        self.assertEqual(len(geojson['features']), 103)
+        self.assertEqual(len(geojson['features']), 725)
 
     def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
         # fout = os.path.join(self.testdir, 'process_cloud.geojson')
         geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(),
                            outdir=self.testdir, close=0, bname='test')
-        self.assertEqual(len(geojson['features']), 493)
+        self.assertEqual(len(geojson['features']), 1136)
 
     def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
         # fout = os.path.join(self.testdir, 'process_coast.geojson')
         geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True,
                            outdir=self.testdir, bname='test')
-        self.assertEqual(len(geojson['features']), 95)
+        self.assertEqual(len(geojson['features']), 589)
