@@ -1,3 +1,7 @@
+1.0.3:
+    - Added smooth parameter (passed to potrace as alphamax)
+    - Fix tests
+
 1.0.2:
     - Auditable logger
     - Simplification and close line string options added
