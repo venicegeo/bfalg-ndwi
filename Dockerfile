@@ -67,7 +67,7 @@ RUN \
         --with-gif=no \
         --with-ogdi=no \
         --with-fme=no \
-        --with-jasper=no \
+        --with-jasper=yes \
         --with-ecw=no \
         --with-kakadu=no \
         --with-mrsid=no \
