@@ -90,7 +90,8 @@ The band names, green and nir, is what is referenced in the online help. However
 |---------------|---------------|-------------|
 | Landsat8      | 1 (Coastal)   | 5 (NIR)     |
 | RapidEye      | 2 (Green)     | 4 (NIR)     |
-| PlanetSceope  | 2 (Green)     | 4 (NIR)     |
+| PlanetScope   | 2 (Green)     | 4 (NIR)     |
+| Sentinel      | 3 (Green)     | 8 (NIR)     |
 
 
 ## Development
