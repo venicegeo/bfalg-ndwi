@@ -18,7 +18,7 @@ FROM cloudfoundry/cflinuxfs2
 WORKDIR /build
 
 RUN apt-get update; \
-    apt-get install -y wget python-pip python-dev python-numpy swig git zip libproj-dev libgeos-dev; \
+    apt-get install -y wget python-pip python-dev swig git zip libproj-dev libgeos-dev; \
     apt-get install -y libagg-dev; # libpotrace-dev;
 
 # CentOS

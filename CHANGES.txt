@@ -1,3 +1,7 @@
+1.0.4:
+	- bump beachfront-py version to 0.1.2
+	- enable JPG2000 format in Dockerfile and packaging
+
 1.0.3:
     - Added smooth parameter (passed to potrace as alphamax)
     - Fix tests
