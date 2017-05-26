@@ -1,2 +1,2 @@
 git+https://github.com/gipit/gippy.git@v1.0.0b8
-git+https://github.com/venicegeo/beachfront-py.git@0.1.1
+git+https://github.com/venicegeo/beachfront-py.git@0.1.2
