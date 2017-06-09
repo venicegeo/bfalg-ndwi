@@ -30,8 +30,6 @@ from bfalg_ndwi.version import __version__
 
 logger = logging.getLogger(__name__)
 
-gippy.Options.set_verbose(5)
-
 # defaults
 defaults = {
     'minsize': 100.0,
@@ -75,7 +73,7 @@ def open_image(filenames, bands):
         geoimgs = []
         for i, f in enumerate(filenames):
             geoimg = gippy.GeoImage(f, True)
-            if geoimgs[i].format()[0:3] == 'JP2':
+            if geoimg.format()[0:3] == 'JP2':
                 geoimg = None
                 ds = gdal.Open(f)
                 fout = os.path.splitext(f)[0] + '.tif'
@@ -88,7 +86,10 @@ def open_image(filenames, bands):
             logger.info('Opening %s' % filenames[1], action='Open file', actee=filenames[1], actor=__name__)
             logger.debug('Opening %s (band %s) and %s (band %s)' %
                          (filenames[0], bands[0], filenames[1], bands[1]))
-            geoimg = geoimgs[0].select([bands[0]]).add_band(geoimgs[1][bands[1]])
+            #from nose.tools import set_trace; set_trace()
+            geoimg = geoimgs[0].select([bands[0]])
+            band2 = geoimgs[1][bands[1]-1]
+            geoimg.add_band(band2)
         else:
             logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
             logger.debug('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
