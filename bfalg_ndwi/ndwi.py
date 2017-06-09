@@ -20,7 +20,7 @@ import sys
 import argparse
 import json
 import logging
-
+from osgeo import gdal
 import gippy
 import gippy.algorithms as alg
 import beachfront.mask as bfmask
@@ -29,6 +29,8 @@ import beachfront.vectorize as bfvec
 from bfalg_ndwi.version import __version__
 
 logger = logging.getLogger(__name__)
+
+gippy.Options.set_verbose(5)
 
 # defaults
 defaults = {
@@ -69,18 +71,28 @@ def parse_args(args):
 def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
-        if len(filenames) == 2:
+        # convert if jp2k format
+        geoimgs = []
+        for i, f in enumerate(filenames):
+            geoimg = gippy.GeoImage(f, True)
+            if geoimgs[i].format()[0:3] == 'JP2':
+                geoimg = None
+                ds = gdal.Open(f)
+                fout = os.path.splitext(f)[0] + '.tif'
+                gdal.Translate(fout, ds, format='GTiff')
+                ds = None
+                geoimg = gippy.GeoImage(fout, True)
+            geoimgs.append(geoimg)
+        if len(geoimgs) == 2:
             logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
             logger.info('Opening %s' % filenames[1], action='Open file', actee=filenames[1], actor=__name__)
             logger.debug('Opening %s (band %s) and %s (band %s)' %
                          (filenames[0], bands[0], filenames[1], bands[1]))
-            geoimg = gippy.GeoImage(filenames[0]).select([bands[0]])
-            band2 = gippy.GeoImage(filenames[1]).select([bands[1]])
-            geoimg.add_band(band2[0])
+            geoimg = geoimgs[0].select([bands[0]]).add_band(geoimgs[1][bands[1]])
         else:
             logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
             logger.debug('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
-            geoimg = gippy.GeoImage(filenames[0]).select(bands)
+            geoimg = geoimgs[0].select(bands)
         geoimg.set_bandnames(['green', 'nir'])
         return geoimg
     except Exception, e:
