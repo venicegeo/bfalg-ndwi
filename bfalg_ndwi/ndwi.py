@@ -72,29 +72,25 @@ def open_image(filenames, bands):
         # convert if jp2k format
         geoimgs = []
         for i, f in enumerate(filenames):
-            geoimg = gippy.GeoImage(f, True)
+            bds = bands if len(filenames) == 1 else [bands[i]]
+            bstr = ' '.join([str(_b) for _b in bds])
+            logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
+            geoimg = gippy.GeoImage(f, True).select(bds)
             if geoimg.format()[0:3] == 'JP2':
                 geoimg = None
+                logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
                 ds = gdal.Open(f)
                 fout = os.path.splitext(f)[0] + '.tif'
+                logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
                 gdal.Translate(fout, ds, format='GTiff')
                 ds = None
-                geoimg = gippy.GeoImage(fout, True)
+                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=f, actor=__name__)
+                geoimg = gippy.GeoImage(fout, True).select(bds)
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
-            logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
-            logger.info('Opening %s' % filenames[1], action='Open file', actee=filenames[1], actor=__name__)
-            logger.debug('Opening %s (band %s) and %s (band %s)' %
-                         (filenames[0], bands[0], filenames[1], bands[1]))
-            #from nose.tools import set_trace; set_trace()
-            geoimg = geoimgs[0].select([bands[0]])
-            band2 = geoimgs[1][bands[1]-1]
-            geoimg.add_band(band2)
-        else:
-            logger.info('Opening %s' % filenames[0], action='Open file', actee=filenames[0], actor=__name__)
-            logger.debug('Opening %s using bands %s and %s' % (filenames[0], bands[0], bands[1]))
-            geoimg = geoimgs[0].select(bands)
+            geoimg = geoimgs[0].add_band(geoimgs[1][bands[1]-1])
         geoimg.set_bandnames(['green', 'nir'])
+        #from nose.tools import set_trace; set_trace()
         return geoimg
     except Exception, e:
         logger.error('bfalg_ndwi error opening input: %s' % str(e))
