@@ -1,3 +1,6 @@
+1.0.5:
+    - Support Sentinel-2 (and other jp2k formats) by first converting the files to GeoTiff if in JP2 format
+
 1.0.4:
 	- bump beachfront-py version to 0.1.2
 	- enable JPG2000 format in Dockerfile and packaging
