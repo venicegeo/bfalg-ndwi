@@ -30,7 +30,7 @@ services:
 
   test:
     image: beachfront:alg-ndwi
-    command: bash -c 'nosetests -v -s --with-coverage --cover-inclusive --cover-package bfalg_ndwi'
+    command: bash -c 'nosetests -v -s --with-coverage --cover-inclusive --cover-package bfalg_ndwi --debug=bfalg_ndwi'
     working_dir: /work
     volumes:
       - '.:/work:rw'
