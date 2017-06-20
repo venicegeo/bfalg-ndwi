@@ -88,9 +88,11 @@ def open_image(filenames, bands):
                 geoimg = gippy.GeoImage(fout, True).select(bds)
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
-            geoimg = geoimgs[0].add_band(geoimgs[1][bands[1]-1])
-        geoimg.set_bandnames(['green', 'nir'])
-        #from nose.tools import set_trace; set_trace()
+            b1 = geoimgs[1][bands[1]-1]
+            geoimgs[0].add_band(b1)
+            geoimgs[0].set_bandnames(['green', 'nir'])
+            return geoimgs[0]
+        geoimgs[0].set_bandnames(['green', 'nir'])
         return geoimg
     except Exception, e:
         logger.error('bfalg_ndwi error opening input: %s' % str(e))
