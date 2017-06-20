@@ -17,7 +17,7 @@ GNU General Public License for more details.
 import unittest
 import os
 import requests
-from gippy import GeoImage
+import gippy
 import bfalg_ndwi.ndwi as alg
 
 
@@ -33,29 +33,43 @@ def download_image(url):
                     f.write(chunk)
         except:
             raise Exception("Problem downloading %s" % url)
-    return GeoImage(fout)
+    return fout
 
 
 class TestNDWI(unittest.TestCase):
     """ Test masking functions """
 
-    # cirrus
-    img1url = 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_B1.TIF'
-    img2url = 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_B5.TIF'
-    qimgurl = 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_BQA.TIF'
+    images = {
+        'landsat': {
+            'img1': 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_B1.TIF',
+            'img2': 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_B5.TIF',
+            'qimg': 'http://landsat-pds.s3.amazonaws.com/L8/008/028/LC80080282016215LGN00/LC80080282016215LGN00_BQA.TIF',
+            'nfeat': 725,
+            'nfeat_coast': 589
+        },
+        'sentinel': {
+            'img1': 'https://sentinel-s2-l1c.s3.amazonaws.com/tiles/10/S/FE/2017/4/20/0/B03.jp2',
+            'img2': 'https://sentinel-s2-l1c.s3.amazonaws.com/tiles/10/S/FE/2017/4/20/0/B08.jp2',
+            'nfeat': 63,
+            'nfeat_coast': 65
+        }
+    }
 
     testdir = os.path.dirname(__file__)
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """ Download all test images """
-        self.img1 = download_image(self.img1url)
-        self.img2 = download_image(self.img2url)
-        self.qimg = download_image(self.qimgurl)
-        #init_logger(muted=False)
+        for imgs in cls.images.values():
+            for img in imgs.values():
+                if isinstance(img, str):
+                    download_image(img)
+        # for debugging
+        # gippy.Options.set_verbose(5)
 
-    def open_image(self):
+    def open_image(self, source='landsat'):
         """ Open test image """
-        filenames = [self.img1.filename(), self.img2.filename()]
+        filenames = [download_image(self.images[source]['img1']), download_image(self.images[source]['img2'])]
         geoimg = alg.open_image(filenames, [1, 1])
         return geoimg
 
@@ -70,26 +84,31 @@ class TestNDWI(unittest.TestCase):
 
     def test_open_image(self):
         """ Open 1 or 2 files to get two specific bands """
-        geoimg = self.open_image()
-        self.assertEqual(geoimg.nbands(), 2)
+        for src in self.images:
+            geoimg = self.open_image(source=src)
+            self.assertEqual(geoimg.nbands(), 2)
 
     def test_process(self):
         """ Coastline extraction from two raster bands """
-        geoimg = self.open_image()
-        # fout = os.path.join(self.testdir, 'process.geojson')
-        geojson = alg.process(geoimg, bname='test', outdir=self.testdir)
-        self.assertEqual(len(geojson['features']), 725)
+        for src in self.images:
+            geoimg = self.open_image(source=src)
+            # fout = os.path.join(self.testdir, 'process.geojson')
+            geojson = alg.process(geoimg, bname='test_%s' % src, outdir=self.testdir)
+            self.assertEqual(len(geojson['features']), self.images[src]['nfeat'])
 
     def test_main_with_cloudmask(self):
         """ Coastline extraction with cloud masking """
         # fout = os.path.join(self.testdir, 'process_cloud.geojson')
-        geojson = alg.main([self.img1.filename(), self.img2.filename()], l8bqa=self.qimg.filename(),
-                           outdir=self.testdir, close=0, bname='test')
+        fnames = self.images['landsat']
+        geojson = alg.main([fnames['img1'], fnames['img2']], l8bqa=fnames['qimg'],
+                           outdir=self.testdir, close=0, bname='test_landsat_cloud')
         self.assertEqual(len(geojson['features']), 1136)
 
     def test_main_with_coastmask(self):
         """ Coastline extraction with coast masking """
         # fout = os.path.join(self.testdir, 'process_coast.geojson')
-        geojson = alg.main([self.img1.filename(), self.img2.filename()], coastmask=True,
-                           outdir=self.testdir, bname='test')
-        self.assertEqual(len(geojson['features']), 589)
+        for src in self.images:
+            fnames = [download_image(self.images[src]['img1']), download_image(self.images[src]['img2'])]
+            geojson = alg.main(fnames, coastmask=True,
+                               outdir=self.testdir, bname='test_%s' % src)
+            self.assertEqual(len(geojson['features']), self.images[src]['nfeat_coast'])
