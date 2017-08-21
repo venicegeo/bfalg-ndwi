@@ -1,6 +1,4 @@
 name: bfalg-ndwi-dev
-channels:
-  - https://proxy:proxy@nexus.devops.geointservices.io/content/repositories/beachfront-conda
 dependencies:
   - beachfront
   - numpy=1.12.0=py27_blas_openblas_200
