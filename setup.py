@@ -24,14 +24,8 @@ import imp
 here = os.path.abspath(os.path.dirname(__file__))
 __version__ = imp.load_source('bfalg_ndwi.version', 'bfalg_ndwi/version.py').__version__
 
-# get the dependencies and installs
-with open(os.path.join(here, 'requirements.txt'), encoding='utf-8') as f:
-    reqs = f.read().split('\n')
-with open(os.path.join(here, 'requirements-dev.txt'), encoding='utf-8') as f:
-    test_reqs = f.read().split('\n')
-
-install_requires = [x.strip() for x in reqs if 'git+' not in x]
-tests_require = [x.strip() for x in test_reqs if 'git+' not in x]
+install_requires = []
+tests_require = ['nose==1.3.7', 'coverage==4.3.4']
 
 setup(
     name='bfalg_ndwi',

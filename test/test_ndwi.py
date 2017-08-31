@@ -60,16 +60,17 @@ class TestNDWI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """ Download all test images """
-        for imgs in cls.images.values():
-            for img in imgs.values():
-                if isinstance(img, str):
-                    download_image(img)
+        for source, imgs in cls.images.iteritems():
+            for name, url in imgs.iteritems():
+                if isinstance(url, str):
+                    cls.images[source][name]=download_image(url)
+        print cls.images
         # for debugging
         # gippy.Options.set_verbose(5)
 
     def open_image(self, source='landsat'):
         """ Open test image """
-        filenames = [download_image(self.images[source]['img1']), download_image(self.images[source]['img2'])]
+        filenames = [self.images[source]['img1'], self.images[source]['img2']]
         geoimg = alg.open_image(filenames, [1, 1])
         return geoimg
 
@@ -108,7 +109,7 @@ class TestNDWI(unittest.TestCase):
         """ Coastline extraction with coast masking """
         # fout = os.path.join(self.testdir, 'process_coast.geojson')
         for src in self.images:
-            fnames = [download_image(self.images[src]['img1']), download_image(self.images[src]['img2'])]
+            fnames = [self.images[src]['img1'], self.images[src]['img2']]
             geojson = alg.main(fnames, coastmask=True,
                                outdir=self.testdir, bname='test_%s' % src)
             self.assertEqual(len(geojson['features']), self.images[src]['nfeat_coast'])

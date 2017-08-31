@@ -26,7 +26,7 @@ import gippy.algorithms as alg
 import beachfront.mask as bfmask
 import beachfront.process as bfproc
 import beachfront.vectorize as bfvec
-from bfalg_ndwi.version import __version__
+from version import __version__
 
 logger = logging.getLogger(__name__)
 
