@@ -11,12 +11,16 @@ node {
 	
     stage("Setup") {
         deleteDir()
-	sh "mkdir bfalg-ndwi"
-	dir("bfalg-ndwi") {
-            git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
-	    appvers = sh(script: """git describe --long --tags --always | sed 's/\\./-/'g""", returnStdout: true).trim()
-	    appName = "bfalg-ndwi-${appvers}"
-	}
+		sh "mkdir bfalg-ndwi"
+		dir("bfalg-ndwi") {
+			if(env.GITLAB_CREDS) {                                                      
+				git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
+			} else {                                                                    
+				git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"                    
+			}  
+			appvers = sh(script: """git describe --long --tags --always | sed 's/\\./-/'g""", returnStdout: true).trim()
+			appName = "bfalg-ndwi-${appvers}"
+		}
 	withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.ARTIFACT_STORAGE_CREDS}", usernameVariable: "NUSER", passwordVariable: "NPASS"]]) {
             sh """
               curl -L https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
@@ -95,14 +99,6 @@ stage("Dependency Check") {
                 """
             }
         }
-    }
-    stage("Cleanup") {
-	withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.ARTIFACT_STORAGE_CREDS}", usernameVariable: "NUSER", passwordVariable: "NPASS"]]) {
-	    sh """
-	      export PATH="$root/miniconda2/bin:$PATH"
-              conda config --remove channels `echo $CONDA_CHANNEL_URL | sed -e "s/NEXUSUSER/${NUSER}/g" | sed -e "s/NEXUSPASS/${NPASS}/g"`
-              rm -rf miniconda2
-	    """
-	}
+		sh "rm $HOME/.condarc"
     }
 }
