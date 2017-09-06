@@ -38,7 +38,7 @@ node {
     stage("Archive") {
         def archiveName="bfalg-ndwi.tgz"
 	    dir("bfalg-ndwi") {
-        sh "tar -cvzf ${archiveName} bfalg_ndwi/ ci/ manifest.jenkins.yml pzsvc-exec.config environment.yml Procfile JenkinsFile"
+        sh "tar -cvzf ${archiveName} bfalg_ndwi/ test/ manifest.jenkins.yml setup.py LISCENSE.txt environment*.yml requirements*.txt JenkinsFile"
         sh """
           mvn -X --settings ~/.m2/settings.xml deploy:deploy-file -Dfile=${archiveName} \
     		-DrepositoryId=nexus \
