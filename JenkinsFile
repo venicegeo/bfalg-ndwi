@@ -36,6 +36,7 @@ node {
 
     stage("Archive") {
         def archiveName="bfalg-ndwi.tgz"
+	    dir("bfalg-ndwi") {
         sh "tar -cvzf ${archiveName} bfalg_ndwi/ ci/ manifest.jenkins.yml pzsvc-exec.config environment.yml Procfile JenkinsFile"
         sh """
           mvn -X --settings ~/.m2/settings.xml deploy:deploy-file -Dfile=${archiveName} \
@@ -49,6 +50,7 @@ node {
     		-Dversion=${appvers} \
     	  """
         sh "rm ${archiveName}"
+	    }
     }
 stage("Dependency Check") {
         withCredentials([
