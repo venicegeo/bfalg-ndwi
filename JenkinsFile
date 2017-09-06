@@ -23,6 +23,7 @@ node {
 		}
 	withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.ARTIFACT_STORAGE_CREDS}", usernameVariable: "NUSER", passwordVariable: "NPASS"]]) {
             sh """
+    	      rm -f $HOME/.condarc
               curl -L https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
               bash miniconda.sh -b -p $root/miniconda2
               rm miniconda.sh
