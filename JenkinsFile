@@ -27,7 +27,7 @@ node {
               bash miniconda.sh -b -p $root/miniconda2
               rm miniconda.sh
               export PATH="$root/miniconda2/bin:$PATH"
-              conda config --add channels `echo $CONDA_CHANNEL_URL | sed -e "s/NEXUSUSER/${NUSER}/g" | sed -e "s/NEXUSPASS/${NPASS}/g"`
+              conda config --add channels `echo $CONDA_CHANNEL_CREDS_URL | sed -e "s/NEXUSUSER/${NUSER}/g" | sed -e "s/NEXUSPASS/${NPASS}/g"`
               cd bfalg-ndwi
               conda env create -f environment.yml -q
             """
