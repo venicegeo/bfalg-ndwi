@@ -34,11 +34,9 @@ node {
         }
     }
 
-
-    if(false){
     stage("Archive") {
         def archiveName="bfalg-ndwi.tgz"
-        sh "tar -cvzf ${archiveName} bfalg_ndwi/ ci/ manifest.jenkins.yml pzsvc-exec.config environment.yml Procfile"
+        sh "tar -cvzf ${archiveName} bfalg_ndwi/ ci/ manifest.jenkins.yml pzsvc-exec.config environment.yml Procfile JenkinsFile"
         sh """
           mvn -X --settings ~/.m2/settings.xml deploy:deploy-file -Dfile=${archiveName} \
     		-DrepositoryId=nexus \
@@ -51,7 +49,7 @@ node {
     		-Dversion=${appvers} \
     	  """
         sh "rm ${archiveName}"
-    }}
+    }
 stage("Dependency Check") {
         withCredentials([
           [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
