@@ -87,6 +87,7 @@ stage("Dependency Check") {
        		}
 	}
     }
+	/*
     stage("Sonar") {
         withCredentials([string(credentialsId: "${env.SONAR_TOKEN}", variable: 'USERNAME')]) {
             withEnv(["HOME=${root}"]) {
@@ -106,5 +107,5 @@ stage("Dependency Check") {
             }
         }
 		sh "rm $HOME/.condarc"
-    }
+    }*/
 }
