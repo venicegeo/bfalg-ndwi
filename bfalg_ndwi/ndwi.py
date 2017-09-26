@@ -66,6 +66,45 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
+def validate_outdir(outdir):
+    #Prevent path traversal vulnerability by validating outdirectory
+
+    try:
+        #An empty outdir variable is functionally equivalent to the current directory in this case, so the outdir is switched to
+        #    the cwd for compatibility with the validator
+        if outdir == '':
+            outdir = os.getcwd()
+
+        #convert to realpath
+        outdir = os.path.realpath(outdir)
+        check = 0
+
+        #verify path is subordinate to current directory
+        if outdir.startswith(os.getcwd()) is False:
+            check = check + 1
+
+        #verify path exists and is a directory
+        if os.path.isdir(outdir) is False:
+            check = check + 1
+
+        if check != 0:
+            # Not currently doing anything with the check value other than making sure its zero
+            #    It could be valuable in the log to see how many errors occured
+            #    Or to use different values to distinguish the combination of errors that occured.
+            logger.info('Outdir invalid.  Changing outdir to current working directory')
+            outdir = os.getcwd()
+        return outdir
+    except:
+        return os.getcwd()
+
+
+def validate_basename(basename):
+    basename = basename.replace('.','')
+    basename = basename.replace('/','')
+    basename = basename.replace('\\','')
+    return basename
+
+
 def open_image(filenames, bands):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
@@ -189,8 +228,10 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
 def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
+    outdir = validate_outdir(args.outdir)
+    bname = validate_basename(args.basename)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
-         close=args.close, simple=args.simple, smooth=args.smooth, outdir=args.outdir, bname=args.basename)
+         close=args.close, simple=args.simple, smooth=args.smooth, outdir=outdir, bname=args.bname)
 
 
 if __name__ == "__main__":
