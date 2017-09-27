@@ -119,7 +119,14 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
         # open coastline vector
         fname = os.path.join(os.path.dirname(__file__), 'coastmask.shp')
         fout_coast = prefix + '_coastmask.tif'
-        imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
+        try:
+            imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
+        except Exception as e:
+            logger.warning('Error encountered during masking: %s' % str(e))
+            return {
+                'type': 'FeatureCollection',
+                'features': []
+            }
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
