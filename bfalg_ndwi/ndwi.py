@@ -81,9 +81,10 @@ def open_image(filenames, bands):
                 logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
                 ds = gdal.Open(f)
                 fout = os.path.splitext(f)[0] + '.tif'
-                logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
-                gdal.Translate(fout, ds, format='GTiff')
-                ds = None
+                if not os.path.exists(fout):
+                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
+                    gdal.Translate(fout, ds, format='GTiff')
+                    ds = None
                 logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=f, actor=__name__)
                 geoimg = gippy.GeoImage(fout, True).select(bds)
             geoimgs.append(geoimg)
