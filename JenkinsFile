@@ -35,29 +35,6 @@ node {
         }
     }
 
-    stage("Archive") {
-        def archiveName="bfalg-ndwi.tgz"
-	dir("bfalg-ndwi") {
-        sh "tar -cvzf ${archiveName} bfalg_ndwi/ test/ setup.py LICENSE.txt environment*.yml requirements*.txt JenkinsFile"
-        def getDependencyStatus = sh(script: """mvn --quiet --settings ~/.m2/settings.xml dependency:get -Dmaven.repo.local="${root}/.m2/repository" -DrepositoryId=nexus -DartifactId=bfalg-ndwi -Dversion=${appvers} -DgroupId="org.venice.beachfront" -Dpackaging=tgz -DremoteRepositories="nexus::default::${env.ARTIFACT_STORAGE_DEPLOY_URL}" >> /dev/null 2>&1""", returnStatus: true)
-        if(getDependencyStatus == 0) {
-              echo "Artifact version ${appvers} exists in Nexus, nothing to do"
-        } else {
-	sh """
-          mvn -X --settings ~/.m2/settings.xml deploy:deploy-file -Dfile=${archiveName} \
-    		-DrepositoryId=nexus \
-    		-Durl="${env.ARTIFACT_STORAGE_DEPLOY_URL}" \
-    		-DgroupId="org.venice.beachfront" \
-    		-DgeneratePom=false \
-    		-Dpackaging=tgz \
-    		-Dmaven.repo.local="${root}/.m2/repository" \
-    		-DartifactId=bfalg-ndwi \
-    		-Dversion=${appvers} \
-    	  """
-	}
-        sh "rm ${archiveName}"
-	    }
-    }
 stage("Dependency Check") {
         withCredentials([
           [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
