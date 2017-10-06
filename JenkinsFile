@@ -4,7 +4,7 @@ node {
     def root = pwd()
     def mvn = tool 'M3'
     def fortifyBuild = "bfalg-ndwi-${env.BUILD_NUMBER}"
-    def sonar = tool 'SonarQube Scanner 3.0'
+    def sonar = tool 'SonarQube Runner 2.8'
     def projectId = "venicegeo:beachfront:bfalg-ndwi"
     def appvers = ""
     def appName = ""
