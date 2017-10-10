@@ -3,8 +3,6 @@
 node {
   def root = pwd()
   def mvn = tool 'M3'
-  def fortifyBuild = "bfalg-ndwi-${env.BUILD_NUMBER}"
-  def sonar = tool 'SonarQube Runner 2.8'
   def projectId = "venicegeo:beachfront:bfalg-ndwi"
   def appvers = ""
   def appName = ""
@@ -41,9 +39,9 @@ node {
           [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
         ]) {
           dir("bfalg-ndwi") {
-            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b '${fortifyBuild}' -python-path `python -c "import sys;print ':'.join(sys.path)"` {*.py,**/*.py}"
-            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b '${fortifyBuild}' -scan -python-path `python -c "import sys;print ':'.join(sys.path)"` -Xmx1G -f fortifyResults-${fortifyBuild}.fpr"
-            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyBuild}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER} ./bfalg_ndwi/{*.py,**/*.py} -exclude **/test/* -exclude **/deploy/*"
+            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER}  -scan -Xmx8G -f fortifyResults-${env.BUILD_NUMBER}.fpr"
+            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${env.BUILD_NUMBER}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
           }
         }
   }
