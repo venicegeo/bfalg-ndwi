@@ -1,69 +1,52 @@
 #!/usr/bin/groovy
 
 node {
-    def root = pwd()
-    def mvn = tool 'M3'
-    def fortifyBuild = "bfalg-ndwi-${env.BUILD_NUMBER}"
-    def sonar = tool 'SonarQube Runner 2.8'
-    def projectId = "venicegeo:beachfront:bfalg-ndwi"
-    def appvers = ""
-    def appName = ""
+  def root = pwd()
+  def mvn = tool 'M3'
+  def fortifyBuild = "bfalg-ndwi-${env.BUILD_NUMBER}"
+  def sonar = tool 'SonarQube Runner 2.8'
+  def projectId = "venicegeo:beachfront:bfalg-ndwi"
+  def appvers = ""
+  def appName = ""
 
-    stage("Setup") {
-        deleteDir()
-		sh "mkdir bfalg-ndwi"
-		dir("bfalg-ndwi") {
-			if(env.GITLAB_CREDS) {
-				git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
-			} else {
-				git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
-			}
-			appvers = sh(script: """git describe --long --tags --always | sed 's/\\./-/'g""", returnStdout: true).trim()
-			appName = "bfalg-ndwi-${appvers}"
-		}
-	withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.ARTIFACT_READ_ONLY_CREDS}", usernameVariable: "NUSER", passwordVariable: "NPASS"]]) {
-            sh """
-    	      rm -f $HOME/.condarc
-              curl -L https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
-              bash miniconda.sh -b -p $root/miniconda2
-              rm miniconda.sh
-              export PATH="$root/miniconda2/bin:$PATH"
-	      conda config --add channels `echo "${env.CONDA_CHANNEL_URL}" | sed "s#://#://${NUSER}:${NPASS}@#g"`
-              cd bfalg-ndwi
-              conda env create -f environment.yml -q
-            """
+  stage("Setup") {
+    deleteDir()
+    sh "mkdir bfalg-ndwi"
+    dir("bfalg-ndwi") {
+      if(env.GITLAB_CREDS) {
+        git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
+      } else {
+        git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
+      }
+
+    appvers = sh(script: """git describe --long --tags --always | sed 's/\\./-/'g""", returnStdout: true).trim()
+    appName = "bfalg-ndwi-${appvers}"
+    }
+  }
+
+  stage("Dependency Check") {
+    withCredentials([
+      [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
+      ]) {
+        dir("bfalg-ndwi") {
+          sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --version"
+          sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --project "bfalg-ndwi" --scan '.' --format "XML" --enableExperimental --disableBundleAudit"
+          sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
         }
-    }
+      }
+  }
 
-stage("Dependency Check") {
+  stage("Fortify Scans") {
         withCredentials([
           [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
         ]) {
-		dir("bfalg-ndwi") {
-	            sh """
-        	      /jslave/dependency-check/dependency-check/bin/dependency-check.sh --version
-            	      /jslave/dependency-check/dependency-check/bin/dependency-check.sh --project "bfalg-ndwi" --scan '.' --format "XML" --enableExperimental --disableBundleAudit
-	              /bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}
-	    	    """
-		}
-	}
-    }
-    stage("Fortify Scans") {
-        withCredentials([
-          [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
-        ]) {
-		dir("bfalg-ndwi") {
-			sh """
-          		  export PATH="$root/miniconda2/bin:$PATH" && source activate bfalg-ndwi
-          		  /opt/hp_fortify_sca/bin/sourceanalyzer -b ${fortifyBuild} -python-path `python -c "import sys;print ':'.join(sys.path)"` {*.py,**/*.py}
-          		  /opt/hp_fortify_sca/bin/sourceanalyzer -b ${fortifyBuild} -scan -python-path `python -c "import sys;print ':'.join(sys.path)"` -Xmx1G -f fortifyResults-${fortifyBuild}.fpr
-	    		  /bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyBuild}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}
-          		  source deactivate
-          		  ls
-        		"""
-       		}
-	}
-    }
+          dir("bfalg-ndwi") {
+            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${fortifyBuild} -python-path `python -c "import sys;print ':'.join(sys.path)"` {*.py,**/*.py}"
+            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${fortifyBuild} -scan -python-path `python -c "import sys;print ':'.join(sys.path)"` -Xmx1G -f fortifyResults-${fortifyBuild}.fpr"
+            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyBuild}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+          }
+        }
+  }
 	/*
     stage("Sonar") {
         withCredentials([string(credentialsId: "${env.SONAR_TOKEN}", variable: 'USERNAME')]) {
