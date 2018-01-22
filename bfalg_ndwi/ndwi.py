@@ -30,6 +30,7 @@ from bfalg_ndwi.version import __version__
 
 logger = logging.getLogger(__name__)
 
+
 # defaults
 defaults = {
     'minsize': 100.0,
@@ -134,12 +135,12 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     logger.debug("Otsu's threshold = %s" % threshold)
 
     # debug - save thresholded image
-    if logger.level <= logging.DEBUG:
-        fout = prefix + '_thresh.tif'
-        logger.debug('Saving thresholded image as %s' % fout)
-        logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-        imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
-        (imgout[0] > threshold).save(imgout2[0])
+    #if logger.level <= logging.DEBUG:
+    #    fout = prefix + '_thresh.tif'
+    #    logger.debug('Saving thresholded image as %s' % fout)
+    #    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    #    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+    #    (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
     coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
@@ -185,10 +186,13 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
             raise SystemExit()
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
+        fout = os.path.join(outdir, bname + '.geojson')
+        if not os.path.exists(fout):
+            geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
                           simple=simple, smooth=smooth, outdir=outdir, bname=bname)
-        logger.info('bfalg-ndwi complete: %s' % bname)
-        return geojson
+            logger.info('bfalg-ndwi complete: %s' % bname)
+        else:
+            logger.info('bfalg-ndwi: %s already run' % bname)
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
