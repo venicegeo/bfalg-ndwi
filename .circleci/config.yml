@@ -50,8 +50,8 @@ jobs:
             - v0-dependencies27-{{ checksum "requirements.txt"}}
             - v0-dependencies27
       - run: |
-            pip install virtualenv numpy
-            virtualenv ~/venv27
+            pip install virtualenv
+            virtualenv ~/venv27 --system-site-packages
             . ~/venv27/bin/activate
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
@@ -70,8 +70,8 @@ jobs:
             - v0-dependencies36-{{ checksum "requirements.txt"}}
             - v0-dependencies36
       - run: |
-            pip-3.6 install virtualenv numpy
-            virtualenv ~/venv36
+            pip-3.6 install virtualenv
+            virtualenv ~/venv36 --system-site-packages
             . ~/venv/bin/activate
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
