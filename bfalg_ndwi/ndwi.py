@@ -230,8 +230,12 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
             geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
                           simple=simple, smooth=smooth, outdir=outdir, bname=bname)
             logger.info('bfalg-ndwi complete: %s' % bname)
+            return geojson
         else:
             logger.info('bfalg-ndwi: %s already run' % bname)
+            with open(os.path.join(outdir, bname + '.geojson')) as f:
+                geojson = json.loads(f.read())
+            return geojson
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
