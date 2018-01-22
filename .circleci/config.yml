@@ -59,7 +59,7 @@ jobs:
       - save_cache:
           key: v0-dependencies27-{{ checksum "requirements.txt"}}
           paths:
-            - ~/venv
+            - ~/venv27
 
   install_and_test_36:
     <<: *container
@@ -70,16 +70,16 @@ jobs:
             - v0-dependencies36-{{ checksum "requirements.txt"}}
             - v0-dependencies36
       - run: |
-            python3 -m venv ~/venv
+            pip-3.6 install virtualenv
+            virtualenv ~/venv36
             . ~/venv/bin/activate
-            pwd
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
             nosetests -v --with-coverage --cover-package bfalg_ndwi
       - save_cache:
           key: v0-dependencies36-{{ checksum "requirements.txt"}}
           paths:
-            - ~/venv
+            - ~/venv36
 
   deploy:
     <<: *container
