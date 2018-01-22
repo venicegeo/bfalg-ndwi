@@ -111,5 +111,5 @@ class TestNDWI(unittest.TestCase):
         for src in self.images:
             fnames = [self.images[src]['img1'], self.images[src]['img2']]
             geojson = alg.main(fnames, coastmask=True,
-                               outdir=self.testdir, bname='test_%s' % src)
+                               outdir=self.testdir, bname='test_%s_coastmask' % src)
             self.assertEqual(len(geojson['features']), self.images[src]['nfeat_coast'])
