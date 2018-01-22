@@ -1,0 +1,120 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+version: 2
+
+
+references:
+
+  container: &container
+    docker:
+      - image: developmentseed/geolambda:full
+    working_dir: ~/project
+
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v0-repo-{{ .Branch }}-{{ .Revision }}
+        - v0-repo-{{ .Branch }}
+        - v0-repo
+
+jobs:
+
+  checkout_code:
+    <<: *container
+    steps:
+      - *restore_repo
+      - checkout
+      - save_cache:
+          key: v0-repo-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ~/project
+      - run:
+          name: 'Install system dependencies'
+          command: |
+            yum install -y agg-devel
+            wget http://potrace.sourceforge.net/download/1.15/potrace-1.15.tar.gz
+            tar xvf potrace-1.15.tar.gz
+            cd potrace-1.15
+            ./configure --prefix /usr/local
+            make
+            make install
+            cd ..; rm -rf potrace*
+
+  install_and_test_27:
+    <<: *container
+    steps:  
+      - *restore_repo
+      - restore_cache:
+          keys: 
+            - v0-dependencies27-{{ checksum "requirements.txt"}}
+            - v0-dependencies27
+      - run: |
+            pip install virtualenv
+            virtualenv ~/venv27
+            . ~/venv27/bin/activate
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+            nosetests -v --with-coverage --cover-package bfalg_ndwi
+      - save_cache:
+          key: v0-dependencies27-{{ checksum "requirements.txt"}}
+          paths:
+            - ~/venv
+
+  install_and_test_36:
+    <<: *container
+    steps:  
+      - *restore_repo
+      - restore_cache:
+          keys: 
+            - v0-dependencies36-{{ checksum "requirements.txt"}}
+            - v0-dependencies36
+      - run: |
+            python3 -m venv ~/venv
+            . ~/venv/bin/activate
+            pwd
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+            nosetests -v --with-coverage --cover-package bfalg_ndwi
+      - save_cache:
+          key: v0-dependencies36-{{ checksum "requirements.txt"}}
+          paths:
+            - ~/venv
+
+  deploy:
+    <<: *container
+    steps:
+      - *restore_repo
+      - restore_cache:
+          keys: 
+            - v0-dependencies36-{{ checksum "requirements.txt"}}
+            - v0-dependencies36
+      - run:
+          name: Push tag to github
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            VERSION=`awk -F\' '{print $2,$4}' bfalg_ndwi/version.py`
+            git tag $VERSION
+            git push origin $VERSION
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - checkout_code
+      - install_and_test_36:
+          requires:
+            - checkout_code
+      - deploy:
+          requires:
+            - install_and_test_36
+          filters:
+            branches:
+              only: master
+  build_test_27:
+    jobs:
+      - checkout_code
+      - install_and_test_27:
+          requires:
+            - checkout_code
