@@ -63,7 +63,7 @@ class TestNDWI(unittest.TestCase):
         for source, imgs in cls.images.iteritems():
             for name, url in imgs.iteritems():
                 if isinstance(url, str):
-                    cls.images[source][name]=download_image(url)
+                    cls.images[source][name] = download_image(url)
         print cls.images
         # for debugging
         # gippy.Options.set_verbose(5)
