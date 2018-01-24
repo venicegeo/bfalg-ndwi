@@ -72,7 +72,7 @@ jobs:
       - run: |
             pip-3.6 install virtualenv
             virtualenv ~/venv36 --system-site-packages
-            . ~/venv/bin/activate
+            . ~/venv36/bin/activate
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
             nosetests -v --with-coverage --cover-package bfalg_ndwi
