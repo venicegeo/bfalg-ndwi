@@ -63,7 +63,6 @@ jobs:
             pip-3.6 install --user virtualenv
             ~/.local/bin/virtualenv ~/venv36 --system-site-packages
             . ~/venv36/bin/activate
-            yum install -y add-devel potrace-devel
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
             nosetests -v --with-coverage --cover-package bfalg_ndwi
