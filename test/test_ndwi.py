@@ -63,7 +63,7 @@ class TestNDWI(unittest.TestCase):
         for source, imgs in cls.images.iteritems():
             for name, url in imgs.iteritems():
                 if isinstance(url, str):
-                    cls.images[source][name]=download_image(url)
+                    cls.images[source][name] = download_image(url)
         print cls.images
         # for debugging
         # gippy.Options.set_verbose(5)
@@ -111,5 +111,5 @@ class TestNDWI(unittest.TestCase):
         for src in self.images:
             fnames = [self.images[src]['img1'], self.images[src]['img2']]
             geojson = alg.main(fnames, coastmask=True,
-                               outdir=self.testdir, bname='test_%s' % src)
+                               outdir=self.testdir, bname='test_%s_coastmask' % src)
             self.assertEqual(len(geojson['features']), self.images[src]['nfeat_coast'])

@@ -30,6 +30,7 @@ from version import __version__
 
 logger = logging.getLogger(__name__)
 
+
 # defaults
 defaults = {
     'minsize': 100.0,
@@ -120,9 +121,10 @@ def open_image(filenames, bands):
                 logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
                 ds = gdal.Open(f)
                 fout = os.path.splitext(f)[0] + '.tif'
-                logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
-                gdal.Translate(fout, ds, format='GTiff')
-                ds = None
+                if not os.path.exists(fout):
+                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
+                    gdal.Translate(fout, ds, format='GTiff')
+                    ds = None
                 logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=f, actor=__name__)
                 geoimg = gippy.GeoImage(fout, True).select(bds)
             geoimgs.append(geoimg)
@@ -158,19 +160,26 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
         # open coastline vector
         fname = os.path.join(os.path.dirname(__file__), 'coastmask.shp')
         fout_coast = prefix + '_coastmask.tif'
-        imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
+        try:
+            imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
+        except Exception as e:
+            logger.warning('Error encountered during masking: %s' % str(e))
+            return {
+                'type': 'FeatureCollection',
+                'features': []
+            }
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
     logger.debug("Otsu's threshold = %s" % threshold)
 
     # debug - save thresholded image
-    if logger.level <= logging.DEBUG:
-        fout = prefix + '_thresh.tif'
-        logger.debug('Saving thresholded image as %s' % fout)
-        logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-        imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
-        (imgout[0] > threshold).save(imgout2[0])
+    #if logger.level <= logging.DEBUG:
+    #    fout = prefix + '_thresh.tif'
+    #    logger.debug('Saving thresholded image as %s' % fout)
+    #    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    #    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+    #    (imgout[0] > threshold).save(imgout2[0])
 
     # vectorize threshdolded (ie now binary) image
     coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
@@ -216,10 +225,17 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
             raise SystemExit()
 
     try:
-        geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
+        fout = os.path.join(outdir, bname + '.geojson')
+        if not os.path.exists(fout):
+            geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
                           simple=simple, smooth=smooth, outdir=outdir, bname=bname)
-        logger.info('bfalg-ndwi complete: %s' % bname)
-        return geojson
+            logger.info('bfalg-ndwi complete: %s' % bname)
+            return geojson
+        else:
+            logger.info('bfalg-ndwi: %s already run' % bname)
+            with open(os.path.join(outdir, bname + '.geojson')) as f:
+                geojson = json.loads(f.read())
+            return geojson
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()

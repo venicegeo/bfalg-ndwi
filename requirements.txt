@@ -1,2 +1,4 @@
-git+https://github.com/gipit/gippy.git@v1.0.0b8
+requests~=2.11.1
+numpy~=1.13.1
+gippy~=1.0.0
 git+https://github.com/venicegeo/beachfront-py.git@0.1.2
