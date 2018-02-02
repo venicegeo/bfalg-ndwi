@@ -8,7 +8,7 @@ references:
 
   container: &container
     docker:
-      - image: developmentseed/geolambda:full
+      - image: venicegeo/geolambda-beachfront
     working_dir: ~/project
 
   restore_repo: &restore_repo
@@ -29,17 +29,7 @@ jobs:
           key: v0-repo-{{ .Branch }}-{{ .Revision }}
           paths:
             - ~/project
-      - run:
-          name: 'Install system dependencies'
-          command: |
-            yum install -y agg-devel
-            wget http://potrace.sourceforge.net/download/1.15/potrace-1.15.tar.gz
-            tar xvf potrace-1.15.tar.gz
-            cd potrace-1.15
-            ./configure --prefix /usr/local
-            make
-            make install
-            cd ..; rm -rf potrace*
+            - /usr/local
 
   install_and_test_27:
     <<: *container
@@ -70,9 +60,10 @@ jobs:
             - v0-dependencies36-{{ checksum "requirements.txt"}}
             - v0-dependencies36
       - run: |
-            pip-3.6 install virtualenv
-            virtualenv ~/venv36 --system-site-packages
+            pip-3.6 install --user virtualenv
+            ~/.local/bin/virtualenv ~/venv36 --system-site-packages
             . ~/venv36/bin/activate
+            yum install -y add-devel potrace-devel
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
             nosetests -v --with-coverage --cover-package bfalg_ndwi
