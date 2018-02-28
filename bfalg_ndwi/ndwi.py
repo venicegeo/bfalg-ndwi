@@ -247,7 +247,7 @@ def cli():
     outdir = validate_outdir(args.outdir)
     bname = validate_basename(args.basename)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
-         close=args.close, simple=args.simple, smooth=args.smooth, outdir=outdir, bname=args.bname)
+         close=args.close, simple=args.simple, smooth=args.smooth, outdir=outdir, bname=bname)
 
 
 if __name__ == "__main__":
