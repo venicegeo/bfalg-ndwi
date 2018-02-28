@@ -44,7 +44,7 @@ jobs:
             virtualenv ~/venv27 --system-site-packages
             . ~/venv27/bin/activate
             pip install -r requirements.txt
-            pip install -r requirements-dev.txt
+            pip install -Ir requirements-dev.txt
             deactivate
             . ~/venv27/bin/activate
             nosetests -v --with-coverage --cover-package bfalg_ndwi
