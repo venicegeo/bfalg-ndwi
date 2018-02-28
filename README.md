@@ -139,3 +139,4 @@ There are two environment variables that need to be set prior to calling the CLI
   $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
   $ export PYTHONPATH=$PYTHONPATH:$PWD/lib/python2.7/dist-packages
   $ export GDAL_DATA=$PWD/share/gdal
+
