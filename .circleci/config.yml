@@ -106,15 +106,9 @@ workflows:
           filters:
             branches:
               only: master
-  build_test_deploy:
+  build_test:
     jobs:
       - checkout_code
       - install_and_test_27:
           requires:
             - checkout_code
-      - deploy:
-          requires:
-            - install_and_test_27
-          filters:
-            branches:
-              only: master
