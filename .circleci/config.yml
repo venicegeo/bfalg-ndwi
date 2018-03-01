@@ -44,9 +44,9 @@ jobs:
             virtualenv ~/venv27 --system-site-packages
             . ~/venv27/bin/activate
             pip install -r requirements.txt
-            pip install -r requirements-dev.txt
+            pip install -Ir requirements-dev.txt
             deactivate
-            . ~/venv36/bin/activate
+            . ~/venv27/bin/activate
             nosetests -v --with-coverage --cover-package bfalg_ndwi
       - save_cache:
           key: v0-dependencies27-{{ checksum "requirements.txt"}}
@@ -94,27 +94,21 @@ jobs:
 
 workflows:
   version: 2
-  #build_test_deploy:
-  #  jobs:
-  #    - checkout_code
-  #    - install_and_test_36:
-  #        requires:
-  #          - checkout_code
-  #    - deploy:
-  #        requires:
-  #          - install_and_test_36
-  #        filters:
-  #          branches:
-  #            only: master
   build_test_deploy:
+    jobs:
+      - checkout_code
+      - install_and_test_36:
+          requires:
+            - checkout_code
+      - deploy:
+          requires:
+            - install_and_test_36
+          filters:
+            branches:
+              only: master
+  build_test:
     jobs:
       - checkout_code
       - install_and_test_27:
           requires:
             - checkout_code
-      - deploy:
-          requires:
-            - install_and_test_27
-          filters:
-            branches:
-              only: master
