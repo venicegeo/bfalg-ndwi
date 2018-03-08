@@ -116,7 +116,9 @@ def open_image(filenames, bands):
             bstr = ' '.join([str(_b) for _b in bds])
             logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
             geoimg = gippy.GeoImage(f, True).select(bds)
-            if geoimg.format()[0:3] == 'JP2':
+            logger.debug(('geoimg format %s' % geoimg.format(), action='Check variable value', actee=fout, actor=__name__))
+            if geoimg.format()[0:2] == 'JP':
+                logger.info(('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__))
                 geoimg = None
                 logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
                 ds = gdal.Open(f)
@@ -124,9 +126,13 @@ def open_image(filenames, bands):
                 if not os.path.exists(fout):
                     logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
                     gdal.Translate(fout, ds, format='GTiff')
+                    status = os.path.exists(fout)
+                    logger.debug('Verifying output file exists %s' % status, action='Verify output', actee=fout, actor=__name__)
                     ds = None
-                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=f, actor=__name__)
-                geoimg = gippy.GeoImage(fout, True).select(bds)
+                logger.debug('fout is set to %s' % fout, action='Check variable value', actee=fout, actor=__name__)
+                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=fout, actor=__name__)
+                logger.debug('bds is set to %s' % bds, action='Check variable value', actee=fout, actor=__name__)
+                geoimg = gippy.GeoImage(fout, True).select(bds) # Is this trying to open the correct bands?, the error message would look similar
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
             b1 = geoimgs[1][bands[1]-1]
