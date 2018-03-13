@@ -35,16 +35,8 @@ jobs:
     <<: *container
     steps:  
       - *restore_repo
-      - restore_cache:
-          keys: 
-            - v0-dependencies27-{{ checksum "requirements.txt"}}
-            - v0-dependencies27
       - run: |
             nosetests -v --with-coverage --cover-package bfalg_ndwi
-      - save_cache:
-          key: v0-dependencies27-{{ checksum "requirements.txt"}}
-          paths:
-            - ~/venv27
 
   install_and_test_36:
     <<: *container
