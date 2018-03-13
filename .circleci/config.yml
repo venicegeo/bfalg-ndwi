@@ -40,13 +40,6 @@ jobs:
             - v0-dependencies27-{{ checksum "requirements.txt"}}
             - v0-dependencies27
       - run: |
-            pip install virtualenv
-            virtualenv ~/venv27 --system-site-packages
-            . ~/venv27/bin/activate
-            pip install -r requirements.txt
-            pip install -Ir requirements-dev.txt
-            deactivate
-            . ~/venv27/bin/activate
             nosetests -v --with-coverage --cover-package bfalg_ndwi
       - save_cache:
           key: v0-dependencies27-{{ checksum "requirements.txt"}}
