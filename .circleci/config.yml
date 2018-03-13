@@ -8,7 +8,7 @@ references:
 
   container: &container
     docker:
-      - image: venicegeo/beachfront
+        - image: venicegeo/beachfront:0.1.0
     working_dir: ~/project
 
   restore_repo: &restore_repo
