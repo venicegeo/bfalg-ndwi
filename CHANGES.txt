@@ -1,3 +1,7 @@
+1.0.8:
+    - better check to see if file is JP2K (previously failing for some JP2K libs)
+    - Added in development Dockerfile and docker-compose.yml files
+
 1.0.7:
     - minor bug fix in CLI
 
