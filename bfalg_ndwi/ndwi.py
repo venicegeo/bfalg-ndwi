@@ -116,9 +116,9 @@ def open_image(filenames, bands):
             bstr = ' '.join([str(_b) for _b in bds])
             logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
             geoimg = gippy.GeoImage(f, True).select(bds)
-            logger.debug(('geoimg format %s' % geoimg.format(), action='Check variable value', actee=fout, actor=__name__))
+            logger.debug(('geoimg format %s' % geoimg.format()), action='Check variable value', actee=f, actor=__name__)
             if geoimg.format()[0:2] == 'JP':
-                logger.info(('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__))
+                logger.info('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__)
                 geoimg = None
                 logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
                 ds = gdal.Open(f)
