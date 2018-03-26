@@ -113,3 +113,21 @@ class TestNDWI(unittest.TestCase):
             geojson = alg.main(fnames, coastmask=True,
                                outdir=self.testdir, bname='test_%s_coastmask' % src)
             self.assertEqual(len(geojson['features']), self.images[src]['nfeat_coast'])
+
+    def test_validate_basename(self):
+        """ Validation of Basename """
+        basename = 'shoreline.\\\\'
+        basename = alg.validate_basename(basename)
+        self.assertEqual(basename, 'shoreline')
+
+    def test_validate_outdir_empty(self):
+        """ Validation of empty outdirectory """
+        outdir = ''
+        outdir = alg.validate_outdir(outdir)
+        self.assertEqual(outdir, os.getcwd())
+
+    def test_validate_outdir_bad(self):
+        """ Validation of empty outdirectory """
+        outdir = '/nonexistentpath'
+        outdir = alg.validate_outdir(outdir)
+        self.assertEqual(outdir, os.getcwd())
