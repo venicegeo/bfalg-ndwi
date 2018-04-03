@@ -8,7 +8,7 @@ RUN \
 
 COPY . $BUILD/
 
-#RUN \
-#    pip install .
+RUN \
+    pip install .
 
-#WORKDIR /home/geolambda
+WORKDIR /home/geolambda
