@@ -20,13 +20,13 @@ services:
   base:
     build:
       context: .
-    image: venicegeo/beachfront
+    image: venicegeo/bfalg-ndwi:latest
     entrypoint: /bin/bash
     volumes:
       - '.:/work:rw'
 
   test:
-    image: venicegeo/beachfront
+    image: venicegeo/bfalg-ndwi:latest
     command: bash -c 'nosetests -v -s --with-coverage --cover-inclusive --cover-package bfalg_ndwi --debug=bfalg_ndwi'
     working_dir: /work
     volumes:
