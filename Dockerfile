@@ -1,4 +1,4 @@
-FROM venicegeo/beachfront:0.2.2
+FROM venicegeo/beachfront:latest
 
 COPY requirements*txt $BUILD/
 
