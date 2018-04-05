@@ -1,7 +1,7 @@
 1.1.0:
 - update version of beachfront-py, use new version of GDAL
 - work on Sentinel JP2K files directly, no convert to tif
-
+- allow user to specify nodata value for input images
 
 1.0.8:
 - better check to see if file is JP2K (previously failing for some JP2K libs)
