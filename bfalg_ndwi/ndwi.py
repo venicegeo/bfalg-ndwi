@@ -119,22 +119,6 @@ def open_image(filenames, bands, nodata=0):
             geoimg = gippy.GeoImage.open([f], update=True).select(bds)
             geoimg.set_nodata(nodata)
             logger.debug(('geoimg format %s' % geoimg.format()), action='Check variable value', actee=f, actor=__name__)
-            if geoimg.format()[0:2] == 'JP':
-                logger.info('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__)
-                geoimg = None
-                logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
-                ds = gdal.Open(f)
-                fout = os.path.splitext(f)[0] + '.tif'
-                if not os.path.exists(fout):
-                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
-                    gdal.Translate(fout, ds, format='GTiff')
-                    status = os.path.exists(fout)
-                    logger.debug('Verifying output file exists %s' % status, action='Verify output', actee=fout, actor=__name__)
-                    ds = None
-                logger.debug('fout is set to %s' % fout, action='Check variable value', actee=fout, actor=__name__)
-                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=fout, actor=__name__)
-                logger.debug('bds is set to %s' % bds, action='Check variable value', actee=fout, actor=__name__)
-                geoimg = gippy.GeoImage(fout, True).select(bds) # Is this trying to open the correct bands?, the error message would look similar
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
             b1 = geoimgs[1][bands[1]-1]
@@ -161,6 +145,7 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     # calculate NWDI
     fout = prefix + '_ndwi.tif'
     logger.info('Saving NDWI to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    gippy.Options.set_chunksize(1000)
     imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
