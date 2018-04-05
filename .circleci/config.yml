@@ -47,7 +47,7 @@ jobs:
             pip install -I -r requirements-dev.txt
             deactivate
             . ~/venv/bin/activate
-            nosetests -v --with-coverage --cover-package bfalg_ndwi
+            #nosetests -v --with-coverage --cover-package bfalg_ndwi
       - save_cache:
           key: v0-dependencies27-{{ checksum "requirements.txt"}}
           paths:
