@@ -7,11 +7,27 @@ node {
   def appvers = ""
   def appName = ""
 
+  stage("Config") {
+    // clone the configuration repository and copy the current configuration
+    def configDir = "${root}/configuration"
+    def configFile = "${root}/config.json"
+    dir(configDir) {
+      git url: "${env.CONFIGURATION_URL}", credentialsId: "${env.CONFIGURATION_CREDS}"
+      sh "mv ${configDir}/${ENVIRONMENT}-config.json ${configFile}"
+      deleteDir()
+    }
+    // read the current configuration
+    def configJson = readJSON file: "${configFile}"
+    for (param in configJson.credparams + configJson.jobparams) { 
+      env."${param.name}" = (param.type == "booleanParam") ? "${param.defaultvalue}".toBoolean() : "${param.defaultvalue}"
+    }
+  }
+  
   stage("Setup") {
     deleteDir()
     sh "mkdir bfalg-ndwi"
     dir("bfalg-ndwi") {
-      if(env.GITLAB_CREDS) {
+      if(env.USE_GIT_CREDS) {
         git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
       } else {
         git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
