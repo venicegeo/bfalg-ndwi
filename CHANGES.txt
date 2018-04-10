@@ -1,32 +1,37 @@
+1.1.0:
+- update version of beachfront-py, use new version of GDAL
+- work on Sentinel JP2K files directly, no convert to tif
+- allow user to specify nodata value for input images
+
 1.0.8:
-    - better check to see if file is JP2K (previously failing for some JP2K libs)
-    - Added in development Dockerfile and docker-compose.yml files
+- better check to see if file is JP2K (previously failing for some JP2K libs)
+- Added in development Dockerfile and docker-compose.yml files
 
 1.0.7:
-    - minor bug fix in CLI
+- minor bug fix in CLI
 
 1.0.6:
-    - updated coastline buffer shapefile
-    - debug logging changes
+- updated coastline buffer shapefile
+- debug logging changes
 
 1.0.5:
-    - Support Sentinel-2 (and other jp2k formats) by first converting the files to GeoTiff if in JP2 format
+- Support Sentinel-2 (and other jp2k formats) by first converting the files to GeoTiff if in JP2 format
 
 1.0.4:
-	- bump beachfront-py version to 0.1.2
-	- enable JPG2000 format in Dockerfile and packaging
+- bump beachfront-py version to 0.1.2
+- enable JPG2000 format in Dockerfile and packaging
 
 1.0.3:
-    - Added smooth parameter (passed to potrace as alphamax)
-    - Fix tests
+- Added smooth parameter (passed to potrace as alphamax)
+- Fix tests
 
 1.0.2:
-    - Auditable logger
-    - Simplification and close line string options added
+- Auditable logger
+- Simplification and close line string options added
 
 1.0.1:
-    - uses updated beachfront-py that fixes filtering of fake lines (nodata borders)
-    - increase default turdsize (min size of lines) to 1000 to reduce # of small features
+- uses updated beachfront-py that fixes filtering of fake lines (nodata borders)
+- increase default turdsize (min size of lines) to 1000 to reduce # of small features
 
 1.0.0:
-    - initial version
+- initial version

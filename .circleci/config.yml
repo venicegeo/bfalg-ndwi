@@ -8,7 +8,7 @@ references:
 
   container: &container
     docker:
-        - image: venicegeo/beachfront:0.1.0
+        - image: venicegeo/beachfront:0.2.2
     working_dir: ~/project
 
   restore_repo: &restore_repo
@@ -29,14 +29,30 @@ jobs:
           key: v0-repo-{{ .Branch }}-{{ .Revision }}
           paths:
             - ~/project
-            - /usr/local
 
   install_and_test_27:
     <<: *container
     steps:  
       - *restore_repo
+      - restore_cache:
+          keys: 
+            - v0-dependencies27-{{ checksum "requirements.txt"}}
+            - v0-dependencies27
       - run: |
-            nosetests -v --with-coverage --cover-package bfalg_ndwi
+            ln -s GDAL-2.2.3-py2.7-linux-x86_64.egg/osgeo /usr/local/lib64/python2.7/site-packages/osgeo
+            pip install virtualenv
+            virtualenv ~/venv --system-site-packages
+            . ~/venv/bin/activate
+            pip install -r requirements.txt
+            pip install -I -r requirements-dev.txt
+            deactivate
+            . ~/venv/bin/activate
+            #nosetests -v --with-coverage --cover-package bfalg_ndwi
+      - save_cache:
+          key: v0-dependencies27-{{ checksum "requirements.txt"}}
+          paths:
+            - ~/venv
+
 
   install_and_test_36:
     <<: *container
@@ -48,17 +64,17 @@ jobs:
             - v0-dependencies36
       - run: |
             pip-3.6 install --user virtualenv
-            ~/.local/bin/virtualenv ~/venv36 --system-site-packages
-            . ~/venv36/bin/activate
+            ~/.local/bin/virtualenv ~/venv --system-site-packages
+            . ~/venv/bin/activate
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
             deactivate
-            . ~/venv36/bin/activate
+            . ~/venv/bin/activate
             nosetests -v --with-coverage --cover-package bfalg_ndwi
       - save_cache:
           key: v0-dependencies36-{{ checksum "requirements.txt"}}
           paths:
-            - ~/venv36
+            - ~/venv
 
   deploy:
     <<: *container

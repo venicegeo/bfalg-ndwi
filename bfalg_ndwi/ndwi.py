@@ -54,6 +54,7 @@ def parse_args(args):
     h = 'Basename to give to output files (no extension, defaults to first input filename'
     parser.add_argument('--basename', help=h, default=None)
 
+    parser.add_argument('--nodata', help='Nodata value in input image(s)', default=0, type=int)
     parser.add_argument('--l8bqa', help='Landat 8 Quality band (used to mask clouds)')
     parser.add_argument('--coastmask', help='Mask non-coastline areas', default=defaults['coastmask'], action='store_true')
     parser.add_argument('--minsize', help='Minimum coastline size', default=defaults['minsize'], type=float)
@@ -106,7 +107,7 @@ def validate_basename(basename):
     return basename
 
 
-def open_image(filenames, bands):
+def open_image(filenames, bands, nodata=0):
     """ Take in 1 or two filenames and two band numbers to create single 2-band (green, nir) image """
     try:
         # convert if jp2k format
@@ -115,24 +116,9 @@ def open_image(filenames, bands):
             bds = bands if len(filenames) == 1 else [bands[i]]
             bstr = ' '.join([str(_b) for _b in bds])
             logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
-            geoimg = gippy.GeoImage(f, True).select(bds)
+            geoimg = gippy.GeoImage.open([f], update=True).select(bds)
+            geoimg.set_nodata(nodata)
             logger.debug(('geoimg format %s' % geoimg.format()), action='Check variable value', actee=f, actor=__name__)
-            if geoimg.format()[0:2] == 'JP':
-                logger.info('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__)
-                geoimg = None
-                logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
-                ds = gdal.Open(f)
-                fout = os.path.splitext(f)[0] + '.tif'
-                if not os.path.exists(fout):
-                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
-                    gdal.Translate(fout, ds, format='GTiff')
-                    status = os.path.exists(fout)
-                    logger.debug('Verifying output file exists %s' % status, action='Verify output', actee=fout, actor=__name__)
-                    ds = None
-                logger.debug('fout is set to %s' % fout, action='Check variable value', actee=fout, actor=__name__)
-                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=fout, actor=__name__)
-                logger.debug('bds is set to %s' % bds, action='Check variable value', actee=fout, actor=__name__)
-                geoimg = gippy.GeoImage(fout, True).select(bds) # Is this trying to open the correct bands?, the error message would look similar
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
             b1 = geoimgs[1][bands[1]-1]
@@ -159,6 +145,7 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     # calculate NWDI
     fout = prefix + '_ndwi.tif'
     logger.info('Saving NDWI to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    gippy.Options.set_chunksize(1000)
     imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
@@ -194,10 +181,8 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
 
     # vectorize threshdolded (ie now binary) image
     coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
-
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
-
     # write geojson output file
     fout = prefix + '.geojson'
     logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
@@ -211,9 +196,10 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
 
 
 def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], minsize=defaults['minsize'],
-         close=defaults['close'], simple=defaults['simple'], smooth=defaults['smooth'], outdir='', bname=None):
+         close=defaults['close'], simple=defaults['simple'], smooth=defaults['smooth'], outdir='', bname=None,
+         nodata=0):
     """ Parse command line arguments and call process() """
-    geoimg = open_image(filenames, bands)
+    geoimg = open_image(filenames, bands, nodata=nodata)
     if geoimg is None:
         logger.critical('bfalg-ndwi error opening input file %s' % ','.join(filenames))
         raise SystemExit()
@@ -255,10 +241,11 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
 def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
+    gippy.Options.set_verbose(5)
     outdir = validate_outdir(args.outdir)
     bname = validate_basename(args.basename)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
-         close=args.close, simple=args.simple, smooth=args.smooth, outdir=outdir, bname=bname)
+         close=args.close, simple=args.simple, smooth=args.smooth, outdir=outdir, bname=bname, nodata=args.nodata)
 
 
 if __name__ == "__main__":
