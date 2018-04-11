@@ -27,7 +27,7 @@ node {
     deleteDir()
     sh "mkdir bfalg-ndwi"
     dir("bfalg-ndwi") {
-      if(env.USE_GIT_CREDS) {
+      if(env.USE_GIT_CREDS.toBoolean()) {
         git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
       } else {
         git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
