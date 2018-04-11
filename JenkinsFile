@@ -38,48 +38,51 @@ node {
     }
   }
 
-  stage("Dependency Check") {
-    withCredentials([
-      [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
-      ]) {
-        dir("bfalg-ndwi") {
-          sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --version"
-          sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --project 'bfalg-ndwi' --scan '.' --format 'XML' --enableExperimental --disableBundleAudit"
-          sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
-        }
-      }
-  }
-
-  stage("Fortify Scans") {
-        withCredentials([
-          [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
+  if(!env.SKIP_SCANS.toBoolean()) {
+    stage("Dependency Check") {
+      withCredentials([
+        [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
         ]) {
           dir("bfalg-ndwi") {
-            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER} ./bfalg_ndwi/{*.py,**/*.py} -exclude **/test/* -exclude **/deploy/*"
-            sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER}  -scan -Xmx8G -f fortifyResults-${env.BUILD_NUMBER}.fpr"
-            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${env.BUILD_NUMBER}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+            sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --version"
+            sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --project 'bfalg-ndwi' --scan '.' --format 'XML' --enableExperimental --disableBundleAudit"
+            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
           }
         }
-  }
-	/*
-    stage("Sonar") {
-        withCredentials([string(credentialsId: "${env.SONAR_TOKEN}", variable: 'USERNAME')]) {
-            withEnv(["HOME=${root}"]) {
-                sh """export PATH="$root/miniconda2/bin:$PATH" && source activate bfalg-ndwi
-		  ${sonar}/bin/sonar-scanner \
-                    -Dsonar.python.coverage.reportPath=report/coverage/coverage.xml \
-                    -Dsonar.sources=${root}/bfalg-ndwi/bfalg_ndwi \
-                    -Dsonar.host.url=${env.SONAR_URL} \
-                    -Dsonar.projectKey=${projectId} \
-                    -Dsonar.projectName=${projectId} \
-                    -Dsonar.language=py \
-                    -Dsonar.projectBaseDir=${root}/bfalg-ndwi \
-                    -Dsonar.projectVersion=${appvers} \
-                    -Dsonar.login=${USERNAME}
-		  source deactivate
-                """
+    }
+
+    stage("Fortify Scans") {
+          withCredentials([
+            [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
+          ]) {
+            dir("bfalg-ndwi") {
+              sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER} ./bfalg_ndwi/{*.py,**/*.py} -exclude **/test/* -exclude **/deploy/*"
+              sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER}  -scan -Xmx8G -f fortifyResults-${env.BUILD_NUMBER}.fpr"
+              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${env.BUILD_NUMBER}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
             }
-        }
-		sh "rm $HOME/.condarc"
-    }*/
+          }
+    }
+    
+    /*
+      stage("Sonar") {
+          withCredentials([string(credentialsId: "${env.SONAR_TOKEN}", variable: 'USERNAME')]) {
+              withEnv(["HOME=${root}"]) {
+                  sh """export PATH="$root/miniconda2/bin:$PATH" && source activate bfalg-ndwi
+        ${sonar}/bin/sonar-scanner \
+                      -Dsonar.python.coverage.reportPath=report/coverage/coverage.xml \
+                      -Dsonar.sources=${root}/bfalg-ndwi/bfalg_ndwi \
+                      -Dsonar.host.url=${env.SONAR_URL} \
+                      -Dsonar.projectKey=${projectId} \
+                      -Dsonar.projectName=${projectId} \
+                      -Dsonar.language=py \
+                      -Dsonar.projectBaseDir=${root}/bfalg-ndwi \
+                      -Dsonar.projectVersion=${appvers} \
+                      -Dsonar.login=${USERNAME}
+        source deactivate
+                  """
+              }
+          }
+      sh "rm $HOME/.condarc"
+      }*/
+  }
 }
