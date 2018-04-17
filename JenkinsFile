@@ -44,9 +44,11 @@ node {
         [$class: 'StringBinding', credentialsId: "${env.THREADFIX_API_KEY}", variable: "THREADFIX_KEY"]
         ]) {
           dir("bfalg-ndwi") {
-            sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --version"
-            sh "/jslave/dependency-check/dependency-check/bin/dependency-check.sh --project 'bfalg-ndwi' --scan '.' --format 'XML' --enableExperimental --disableBundleAudit"
-            sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+            def depHome = tool 'owasp_dependency_check'
+            withEnv(["PATH+=${depHome}/bin"]) {
+              sh 'dependency-check.sh --project "bfalg-ndwi" --scan "." --format "XML" --enableExperimental --disableBundleAudit'
+              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${env.THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+            }
           }
         }
     }
