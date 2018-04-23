@@ -20,7 +20,10 @@ import sys
 import argparse
 import json
 import logging
-from osgeo import gdal
+try:
+    from osgeo import gdal
+except:
+    import gdal
 import gippy
 import gippy.algorithms as alg
 import beachfront.mask as bfmask
