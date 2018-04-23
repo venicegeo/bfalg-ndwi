@@ -1,3 +1,6 @@
+1.1.1:
+- conditional import of gdal from osgeo
+
 1.1.0:
 - update version of beachfront-py, use new version of GDAL
 - work on Sentinel JP2K files directly, no convert to tif
