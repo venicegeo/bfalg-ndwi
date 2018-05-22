@@ -1,5 +1,6 @@
 name: bfalg-ndwi
 dependencies:
   - beachfront
+  - gdal=2.1.3
   - numpy=1.12.0=py27_blas_openblas_200
 
