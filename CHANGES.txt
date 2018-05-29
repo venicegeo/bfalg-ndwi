@@ -1,3 +1,6 @@
+1.1.2:
+- allow for variable chunksize in CLI
+
 1.1.1:
 - conditional import of gdal from osgeo
 

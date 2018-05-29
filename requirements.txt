@@ -1,1 +1,1 @@
-beachfront==0.2.4
+beachfront==0.2.5
