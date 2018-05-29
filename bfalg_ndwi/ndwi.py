@@ -64,6 +64,7 @@ def parse_args(args):
     parser.add_argument('--close', help='Close line strings within given pixels', default=defaults['close'], type=int)
     parser.add_argument('--simple', help='Simplify using tolerance in map units', default=None, type=float)
     parser.add_argument('--smooth', help='Smoothing from 0 (none) to 1.33 (no corners', default=defaults['smooth'], type=float)
+    parser.add_argument('--chunksize', help='Chunk size (MB) to use when processing', default=128.0, type=float)
     h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
     parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
@@ -148,7 +149,6 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     # calculate NWDI
     fout = prefix + '_ndwi.tif'
     logger.info('Saving NDWI to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-    gippy.Options.set_chunksize(1000)
     imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
@@ -245,6 +245,7 @@ def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
     gippy.Options.set_verbose(5)
+    gippy.Options.set_chunksize(args.chunksize)
     outdir = validate_outdir(args.outdir)
     bname = validate_basename(args.basename)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,
