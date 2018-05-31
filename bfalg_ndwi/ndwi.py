@@ -159,16 +159,31 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
         try:
             imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
         except Exception as e:
-            logger.warning('Error encountered during masking. Generating empty geojson file: %s/' % str(e))
-            geojson =  {
-                'type': 'FeatureCollection',
-                'features': []
-            }
-            fout = prefix + '.geojson'
-            logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-            with open(fout, 'w') as f:
-                f.write(json.dumps(geojson))
-            return geojson
+            if str(e) == 'No features after masking':
+                logger.warning('Image does not intersect coastal mask.  Generating empty geojson file. Error: %s/' % str(e))
+                geojson =  {
+                    'type': 'FeatureCollection',
+                    'features': []
+                 }
+                fout = prefix + '.geojson'
+                logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+                with open(fout, 'w') as f:
+                    f.write(json.dumps(geojson))
+                return geojson
+            if str(e) == "'NoneType' object has no attribute 'ExportToJson'":
+                logger.warning('Image does not intersect coastal mask. Generating empty geojson file. Error: %s/' % str(e))
+                geojson = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                  }
+                fout = prefix + '.geojson'
+                logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+                with open(fout, 'w') as f:
+                    f.write(json.dumps(geojson))
+                return geojson
+            else:
+                logger.warning('Error encountered during masking. Error : %s' % str(e))
+                raise RuntimeError(e)
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
