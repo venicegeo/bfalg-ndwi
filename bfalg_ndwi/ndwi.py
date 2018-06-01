@@ -64,6 +64,7 @@ def parse_args(args):
     parser.add_argument('--close', help='Close line strings within given pixels', default=defaults['close'], type=int)
     parser.add_argument('--simple', help='Simplify using tolerance in map units', default=None, type=float)
     parser.add_argument('--smooth', help='Smoothing from 0 (none) to 1.33 (no corners', default=defaults['smooth'], type=float)
+    parser.add_argument('--chunksize', help='Chunk size (MB) to use when processing', default=128.0, type=float)
     h = '0: Quiet, 1: Debug, 2: Info, 3: Warn, 4: Error, 5: Critical'
     parser.add_argument('--verbose', help=h, default=2, type=int)
     parser.add_argument('--version', help='Print version and exit', action='version', version=__version__)
@@ -121,7 +122,22 @@ def open_image(filenames, bands, nodata=0):
             logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
             geoimg = gippy.GeoImage.open([f], update=True).select(bds)
             geoimg.set_nodata(nodata)
-            logger.debug(('geoimg format %s' % geoimg.format()), action='Check variable value', actee=f, actor=__name__)
+            if geoimg.format()[0:2] == 'JP':
+                logger.info('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__)
+                geoimg = None
+                logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
+                ds = gdal.Open(f)
+                fout = os.path.splitext(f)[0] + '.tif'
+                if not os.path.exists(fout):
+                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
+                    gdal.Translate(fout, ds, format='GTiff')
+                    status = os.path.exists(fout)
+                    logger.debug('Verifying output file exists %s' % status, action='Verify output', actee=fout, actor=__name__)
+                    ds = None
+                logger.debug('fout is set to %s' % fout, action='Check variable value', actee=fout, actor=__name__)
+                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=fout, actor=__name__)
+                logger.debug('bds is set to %s' % bds, action='Check variable value', actee=fout, actor=__name__)
+                geoimg = gippy.GeoImage(fout, True).select(bds) # Is this trying to open the correct bands?, the error message would look similar
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
             b1 = geoimgs[1][bands[1]-1]
@@ -148,7 +164,6 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     # calculate NWDI
     fout = prefix + '_ndwi.tif'
     logger.info('Saving NDWI to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-    gippy.Options.set_chunksize(1000)
     imgout = alg.indices(geoimg, ['ndwi'], filename=fout)
 
     # mask with coastline
@@ -159,31 +174,49 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
         try:
             imgout = bfmask.mask_with_vector(imgout, (fname, ''), filename=fout_coast)
         except Exception as e:
-            logger.warning('Error encountered during masking. Generating empty geojson file: %s/' % str(e))
-            geojson =  {
-                'type': 'FeatureCollection',
-                'features': []
-            }
-            fout = prefix + '.geojson'
-            logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-            with open(fout, 'w') as f:
-                f.write(json.dumps(geojson))
-            return geojson
+            if str(e) == 'No features after masking':
+                logger.warning('Image does not intersect coastal mask.  Generating empty geojson file. Error: %s/' % str(e))
+                geojson =  {
+                    'type': 'FeatureCollection',
+                    'features': []
+                 }
+                fout = prefix + '.geojson'
+                logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+                with open(fout, 'w') as f:
+                    f.write(json.dumps(geojson))
+                return geojson
+            if str(e) == "'NoneType' object has no attribute 'ExportToJson'":
+                logger.warning('Image does not intersect coastal mask. Generating empty geojson file. Error: %s/' % str(e))
+                geojson = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                  }
+                fout = prefix + '.geojson'
+                logger.info('Saving GeoJSON to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+                with open(fout, 'w') as f:
+                    f.write(json.dumps(geojson))
+                return geojson
+            else:
+                logger.warning('Error encountered during masking. Error : %s' % str(e))
+                raise RuntimeError(e)
 
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
     logger.debug("Otsu's threshold = %s" % threshold)
-
-    # debug - save thresholded image
-    #if logger.level <= logging.DEBUG:
-    #    fout = prefix + '_thresh.tif'
-    #    logger.debug('Saving thresholded image as %s' % fout)
-    #    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-    #    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
-    #    (imgout[0] > threshold).save(imgout2[0])
+    #import pdb; pdb.set_trace()
+    # save thresholded image
+    #if False: #logger.level <= logging.DEBUG:
+    fout = prefix + '_thresh.tif'
+    logger.debug('Saving thresholded image as %s' % fout)
+    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+    imgout2.set_nodata(255)
+    #pdb.set_trace()
+    (imgout[0] > threshold).save(imgout2[0])
+    imgout = imgout2
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
+    coastline = bfvec.potrace(imgout[0], minsize=minsize, close=close, alphamax=smooth)
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
     # write geojson output file
@@ -245,6 +278,7 @@ def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
     gippy.Options.set_verbose(5)
+    gippy.Options.set_chunksize(args.chunksize)
     outdir = validate_outdir(args.outdir)
     bname = validate_basename(args.basename)
     main(args.input, bands=args.bands, l8bqa=args.l8bqa, coastmask=args.coastmask, minsize=args.minsize,

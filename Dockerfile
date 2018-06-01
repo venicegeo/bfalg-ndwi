@@ -1,5 +1,7 @@
 FROM venicegeo/beachfront:latest
 
+WORKDIR $BUILD
+
 COPY requirements*txt $BUILD/
 
 RUN \
