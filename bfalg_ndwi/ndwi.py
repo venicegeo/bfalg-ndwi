@@ -122,7 +122,22 @@ def open_image(filenames, bands, nodata=0):
             logger.info('Opening %s [band(s) %s]' % (f, bstr), action='Open file', actee=f, actor=__name__)
             geoimg = gippy.GeoImage.open([f], update=True).select(bds)
             geoimg.set_nodata(nodata)
-            logger.debug(('geoimg format %s' % geoimg.format()), action='Check variable value', actee=f, actor=__name__)
+            if geoimg.format()[0:2] == 'JP':
+                logger.info('Converting jp2 to geotiff', action='File Conversion', actee=f, actor=__name__)
+                geoimg = None
+                logger.info('Opening %s' % (f), action='Open file', actee=f, actor=__name__)
+                ds = gdal.Open(f)
+                fout = os.path.splitext(f)[0] + '.tif'
+                if not os.path.exists(fout):
+                    logger.info('Saving %s as GeoTiff' % f, action='Save file', actee=fout, actor=__name__)
+                    gdal.Translate(fout, ds, format='GTiff')
+                    status = os.path.exists(fout)
+                    logger.debug('Verifying output file exists %s' % status, action='Verify output', actee=fout, actor=__name__)
+                    ds = None
+                logger.debug('fout is set to %s' % fout, action='Check variable value', actee=fout, actor=__name__)
+                logger.info('Opening %s [band(s) %s]' % (fout, bstr), action='Open file', actee=fout, actor=__name__)
+                logger.debug('bds is set to %s' % bds, action='Check variable value', actee=fout, actor=__name__)
+                geoimg = gippy.GeoImage(fout, True).select(bds) # Is this trying to open the correct bands?, the error message would look similar
             geoimgs.append(geoimg)
         if len(geoimgs) == 2:
             b1 = geoimgs[1][bands[1]-1]
@@ -188,17 +203,20 @@ def process(geoimg, coastmask=defaults['coastmask'], minsize=defaults['minsize']
     # calculate optimal threshold
     threshold = bfproc.otsu_threshold(imgout[0])
     logger.debug("Otsu's threshold = %s" % threshold)
-
-    # debug - save thresholded image
-    #if logger.level <= logging.DEBUG:
-    #    fout = prefix + '_thresh.tif'
-    #    logger.debug('Saving thresholded image as %s' % fout)
-    #    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
-    #    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
-    #    (imgout[0] > threshold).save(imgout2[0])
+    #import pdb; pdb.set_trace()
+    # save thresholded image
+    #if False: #logger.level <= logging.DEBUG:
+    fout = prefix + '_thresh.tif'
+    logger.debug('Saving thresholded image as %s' % fout)
+    logger.info('Saving threshold image to file %s' % fout, action='Save file', actee=fout, actor=__name__)
+    imgout2 = gippy.GeoImage.create_from(imgout, filename=fout, dtype='byte')
+    imgout2.set_nodata(255)
+    #pdb.set_trace()
+    (imgout[0] > threshold).save(imgout2[0])
+    imgout = imgout2
 
     # vectorize threshdolded (ie now binary) image
-    coastline = bfvec.potrace(imgout[0] > threshold, minsize=minsize, close=close, alphamax=smooth)
+    coastline = bfvec.potrace(imgout[0], minsize=minsize, close=close, alphamax=smooth)
     # convert coordinates to GeoJSON
     geojson = bfvec.to_geojson(coastline, source=geoimg.basename())
     # write geojson output file
