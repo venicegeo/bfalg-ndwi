@@ -20,10 +20,12 @@ import sys
 import argparse
 import json
 import logging
+import math
+from pyproj import Proj, transform
 try:
-    from osgeo import gdal
+    from osgeo import gdal, osr
 except:
-    import gdal
+    import gdal, osr
 import gippy
 import gippy.algorithms as alg
 import beachfront.mask as bfmask
@@ -235,7 +237,9 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
          close=defaults['close'], simple=defaults['simple'], smooth=defaults['smooth'], outdir='', bname=None,
          nodata=0):
     """ Parse command line arguments and call process() """
+    getImageSize(filenames)
     geoimg = open_image(filenames, bands, nodata=nodata)
+    calculateExtent(geoimg)
     if geoimg is None:
         logger.critical('bfalg-ndwi error opening input file %s' % ','.join(filenames))
         raise SystemExit()
@@ -262,16 +266,65 @@ def main(filenames, bands=[1, 1], l8bqa=None, coastmask=defaults['coastmask'], m
         if not os.path.exists(fout):
             geojson = process(geoimg, coastmask=coastmask, minsize=minsize, close=close,
                           simple=simple, smooth=smooth, outdir=outdir, bname=bname)
+            size = os.path.getsize(fout)
+            logger.info('Output geojson size: %s bytes' % size, action='Calculate output filesize', actee=fout, actor=__name__)
             logger.info('bfalg-ndwi complete: %s' % bname)
             return geojson
         else:
             logger.info('bfalg-ndwi: %s already run' % bname)
             with open(os.path.join(outdir, bname + '.geojson')) as f:
                 geojson = json.loads(f.read())
+            size = os.path.getsize(f)
+            logger.info('Output geojson size: %s bytes' % size, action='Calculate output filesize', actee=f, actor=__name__)
             return geojson
     except Exception, e:
         logger.critical('bfalg-ndwi error: %s' % str(e))
         raise SystemExit()
+
+
+def calculateExtent(geoimg):
+    try:
+        ext = geoimg.geo_extent()
+        srs = osr.SpatialReference(geoimg.srs()).ExportToProj4()
+        projin = Proj(srs)
+        utm =  convert_wgs_to_utm(ext.x0(), ext.y0())
+        utmproj = 'epsg:%s' % utm
+        logger.debug('utmproj: %s' % utmproj, action='Calculate extent', actee='geoimg', actor=__name__)
+        projout = Proj(init=utmproj)
+        logger.debug('converting extent to UTM. Input proj is %s' % projin, action='Convert BBOX', actee='geoimg', actor=__name__)
+        x0,y0 = projout(ext.x0(), ext.y0())
+        x1,y1 = projout(ext.x1(), ext.y1())
+        logger.debug('Extent in UTM, x0,x1,y0,y1: %s,%s,%s,%s' % (x0,x1,y0,y1), action='Verify extent', actee='geoimg', actor=__name__)
+	area = (x1 - x0) * (y1 - y0)
+	area = area/1000000.0
+	logger.info('Scene size: %s sq kilometers' % area, action='Calculate extent', actee='geoimg', actor=__name__)
+    except Exception, e:
+        logger.error('Unable to calculate area extent of image. Error: %s' % str(e), action='Calculate extent', actee='geoimg', actor=__name__)
+
+
+def convert_wgs_to_utm(lon, lat):
+    try:
+        logger.info('Identifying UTM zone for area calculation', action='Convert_wgs_to_utm', actee='geoimg', actor=__name__)
+        utm_band = str(int((math.floor((lon + 180) / 6 ) % 60) + 1))
+        if len(utm_band) == 1:
+            utm_band = '0'+utm_band
+        if lat >= 0:
+            epsg_code = '326' + utm_band
+        else:
+            epsg_code = '327' + utm_band
+        return int(epsg_code)
+    except Exception, e:
+        logger.error('Unable to identify UTM zone for area calculation. Error: %s' % str(e), action='Convert_wgs_to_utm', actee='geoimg', actor=__name__)
+
+
+def getImageSize(filenames):
+    try:
+        size = 0
+        for i in filenames:
+            size = size + os.path.getsize(i)
+            logger.info('Scene size: %s bytes' % size, action='Calculate Input filesize', actee=i, actor=__name__)
+    except Exception, e:
+        logger.error('Unable to calculate size of input file(s). Error: %s' % str(e), action='Calculate Input filesize', actee=filenames[0], actor=__name__) 
 
 
 def cli():
