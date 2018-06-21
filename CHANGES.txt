@@ -1,3 +1,6 @@
+1.1.4
+- added additional logging statements for tracking processing metrics
+
 1.1.3:
 - revert to converting JP2K to tiff, until libopenjpeg is updated
 - save thresholded image to disk as a uint8 to reduce the memory footprint when reading entire file for potrace
