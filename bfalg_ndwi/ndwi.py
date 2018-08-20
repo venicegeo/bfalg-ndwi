@@ -330,7 +330,7 @@ def getImageSize(filenames):
 def cli():
     args = parse_args(sys.argv[1:])
     logger.setLevel(args.verbose * 10)
-    gippy.Options.set_verbose(5)
+    gippy.Options.set_verbose(3)
     gippy.Options.set_chunksize(args.chunksize)
     outdir = validate_outdir(args.outdir)
     bname = validate_basename(args.basename)
