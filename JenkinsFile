@@ -47,7 +47,7 @@ node {
             def depHome = tool 'owasp_dependency_check'
             withEnv(["PATH+=${depHome}/bin"]) {
               sh 'dependency-check.sh --project "bfalg-ndwi" --scan "." --format "XML" --enableExperimental --disableBundleAudit'
-              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/applications/${env.THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml ${env.THREADFIX_URL}/rest/latest/applications/${env.THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
             }
           }
         }
@@ -60,7 +60,7 @@ node {
             dir("bfalg-ndwi") {
               sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER} ./bfalg_ndwi/{*.py,**/*.py} -exclude **/test/* -exclude **/deploy/*"
               sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.BUILD_NUMBER}  -scan -Xmx8G -f fortifyResults-${env.BUILD_NUMBER}.fpr"
-              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${env.BUILD_NUMBER}.fpr ${env.THREADFIX_URL}/rest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
+              sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${env.BUILD_NUMBER}.fpr ${env.THREADFIX_URL}/rest/latest/applications/${THREADFIX_ID}/upload?apiKey=${THREADFIX_KEY}"
             }
           }
     }
